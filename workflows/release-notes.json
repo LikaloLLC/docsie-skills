@@ -1,0 +1,57 @@
+{
+  "name": "Changelog to release notes",
+  "description": "Write release notes per product area with the release-notes skill.",
+  "inputs": [
+    {
+      "key": "release",
+      "kind": "text",
+      "prompt": "Release name, for example Release 2.5"
+    },
+    {
+      "key": "changelog_csv",
+      "kind": "text",
+      "prompt": "Changelog CSV (area,type,summary)"
+    }
+  ],
+  "steps": [
+    {
+      "key": "book",
+      "tool": "create_book",
+      "description": "Create a book for the result",
+      "config": {
+        "kind": "tool",
+        "arguments": {
+          "documentation_id": "doc_YOUR_SHELF_ID",
+          "name": {
+            "$input": "release"
+          }
+        }
+      }
+    },
+    {
+      "key": "notes",
+      "tool": "builder.agent",
+      "description": "Write the release notes with the release-notes skill",
+      "config": {
+        "kind": "agent",
+        "package_id": "YOUR_RELEASE_NOTES_REVISION_ID",
+        "prompt": "Write the release notes for this release from the changelog, one article per product area, in the given book.",
+        "arguments": {
+          "release": {
+            "$input": "release"
+          },
+          "changelog_csv": {
+            "$input": "changelog_csv"
+          },
+          "book_id": {
+            "$step": "book",
+            "path": "id"
+          }
+        }
+      },
+      "depends_on": [
+        "book"
+      ]
+    }
+  ]
+}

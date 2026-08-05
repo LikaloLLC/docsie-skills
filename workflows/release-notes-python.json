@@ -1,0 +1,54 @@
+{
+  "name": "Changelog to release notes (Python)",
+  "description": "Group the changelog by area with the release-notes script. Needs hosted Python.",
+  "inputs": [
+    {
+      "key": "release",
+      "kind": "text",
+      "prompt": "Release name"
+    },
+    {
+      "key": "changelog_csv",
+      "kind": "text",
+      "prompt": "Changelog CSV (area,type,summary)"
+    }
+  ],
+  "steps": [
+    {
+      "key": "book",
+      "tool": "create_book",
+      "description": "Create a book for the result",
+      "config": {
+        "kind": "tool",
+        "arguments": {
+          "documentation_id": "doc_YOUR_SHELF_ID",
+          "name": {
+            "$input": "release"
+          }
+        }
+      }
+    },
+    {
+      "key": "notes",
+      "tool": "builder.python",
+      "description": "Save one article per product area",
+      "depends_on": [
+        "book"
+      ],
+      "config": {
+        "kind": "python",
+        "package_id": "YOUR_RELEASE_NOTES_REVISION_ID",
+        "entrypoint": "scripts/main.py",
+        "arguments": {
+          "book_id": {
+            "$step": "book",
+            "path": "id"
+          },
+          "changelog_csv": {
+            "$input": "changelog_csv"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "Notes to SOP",
+  "description": "Turn rough notes into an SOP article with the sop-writer skill.",
+  "inputs": [
+    {
+      "key": "task",
+      "kind": "text",
+      "prompt": "Task name"
+    },
+    {
+      "key": "notes",
+      "kind": "text",
+      "prompt": "Rough notes"
+    }
+  ],
+  "steps": [
+    {
+      "key": "book",
+      "tool": "create_book",
+      "description": "Create a book for the result",
+      "config": {
+        "kind": "tool",
+        "arguments": {
+          "documentation_id": "doc_YOUR_SHELF_ID",
+          "name": {
+            "$input": "task"
+          }
+        }
+      }
+    },
+    {
+      "key": "sop",
+      "tool": "builder.agent",
+      "description": "Write the SOP with the sop-writer skill",
+      "config": {
+        "kind": "agent",
+        "package_id": "YOUR_SOP_WRITER_REVISION_ID",
+        "prompt": "Write the SOP for the task below from the notes, then save it in the given book.",
+        "arguments": {
+          "task": {
+            "$input": "task"
+          },
+          "notes": {
+            "$input": "notes"
+          },
+          "book_id": {
+            "$step": "book",
+            "path": "id"
+          }
+        }
+      },
+      "depends_on": [
+        "book"
+      ]
+    }
+  ]
+}

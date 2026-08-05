@@ -1,0 +1,28 @@
+{
+  "name": "Style review",
+  "description": "Check an article against the house style guide and glossary and save a corrected copy.",
+  "inputs": [
+    {
+      "key": "article_id",
+      "kind": "text",
+      "prompt": "Article ID to review"
+    }
+  ],
+  "steps": [
+    {
+      "key": "review",
+      "tool": "builder.agent",
+      "description": "Review the article with the style-reviewer skill",
+      "config": {
+        "kind": "agent",
+        "package_id": "YOUR_STYLE_REVIEWER_REVISION_ID",
+        "prompt": "Review the article below against the house style guide and glossary, and save a corrected copy next to it.",
+        "arguments": {
+          "article_id": {
+            "$input": "article_id"
+          }
+        }
+      }
+    }
+  ]
+}

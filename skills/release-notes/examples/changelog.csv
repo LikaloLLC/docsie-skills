@@ -1,0 +1,7 @@
+area,type,summary
+Editor,new,Tables can now be resized by dragging the column border
+Editor,fixed,Pasting from Word keeps numbered lists
+Portal,new,Search results show the matching section
+Portal,fixed,Dark mode no longer hides code block borders
+API,new,New endpoint lists article revisions
+API,improved,Export requests now return a job ID to check progress

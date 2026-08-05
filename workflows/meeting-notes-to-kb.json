@@ -1,0 +1,54 @@
+{
+  "name": "Meeting notes to knowledge base",
+  "description": "Turn meeting notes into knowledge base articles with the meeting-notes-to-kb skill.",
+  "inputs": [
+    {
+      "key": "title",
+      "kind": "text",
+      "prompt": "Book name, for example IT help desk FAQ"
+    },
+    {
+      "key": "notes",
+      "kind": "text",
+      "prompt": "Meeting notes or transcript"
+    }
+  ],
+  "steps": [
+    {
+      "key": "book",
+      "tool": "create_book",
+      "description": "Create a book for the result",
+      "config": {
+        "kind": "tool",
+        "arguments": {
+          "documentation_id": "doc_YOUR_SHELF_ID",
+          "name": {
+            "$input": "title"
+          }
+        }
+      }
+    },
+    {
+      "key": "kb",
+      "tool": "builder.agent",
+      "description": "Write knowledge base articles with the meeting-notes-to-kb skill",
+      "config": {
+        "kind": "agent",
+        "package_id": "YOUR_MEETING_NOTES_TO_KB_REVISION_ID",
+        "prompt": "Turn the meeting notes below into knowledge base articles and save them in the given book.",
+        "arguments": {
+          "notes": {
+            "$input": "notes"
+          },
+          "book_id": {
+            "$step": "book",
+            "path": "id"
+          }
+        }
+      },
+      "depends_on": [
+        "book"
+      ]
+    }
+  ]
+}
