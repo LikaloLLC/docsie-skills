@@ -1,6 +1,6 @@
-# Docsie skill examples
+# Docsie skill and app examples
 
-Example skills and workflows for the [Docsie](https://www.docsie.io) Workflow Builder.
+Example skills, workflows and apps for [Docsie](https://www.docsie.io).
 
 A skill is a folder with a `SKILL.md` file that tells an AI agent how to do one job your way, plus optional reference files and scripts. The same folder works in three places:
 
@@ -18,6 +18,17 @@ A skill is a folder with a `SKILL.md` file that tells an AI agent how to do one 
 | [`meeting-notes-to-kb`](skills/meeting-notes-to-kb) | Turns meeting notes or a transcript into short knowledge base articles, one per question | [`meeting-notes-to-kb.json`](workflows/meeting-notes-to-kb.json) |
 
 The style guide, glossary and formats in `references/` are examples. Replace them with your own rules.
+
+## Apps in this repository
+
+An app is a skill package with an `app.json`: it adds its own screen to the Docsie chat, can keep records in AI Tables, and its screen can use the Docsie tools the manifest lists, always with the permissions of the person using it.
+
+| App | What it shows |
+|---|---|
+| [`data-explorer`](apps/data-explorer) | The Data Explorer that ships with Docsie: a pivot table with ten chart types over workspace files, AI Tables or sample data, with Excel exports. Its screen loads and saves data only through Docsie tools (`data_sources`, `data_load_rows`, `data_export_view`). |
+| [`feedback-tracker`](apps/feedback-tracker) | A board for customer feedback that keeps its records in its own AI Table and reads and writes them with `rows.list`, `rows.add`, `rows.update` and `rows.delete`. |
+
+To install an app, zip its folder and upload it in Enterprise Portal → **Skills & Agents → Apps**, then choose **Install**. Each app's `README.md` explains how it is built and how to make your own with Claude Code.
 
 ## Use a skill in Docsie
 
@@ -85,7 +96,7 @@ PYTHONPATH=sdk python skills/release-notes/scripts/main.py inputs.json out/
 
 ## Documentation
 
-See **AI Skills & Workflow Builder** in the [Docsie help center](https://help.docsie.io): what skills are, a step-by-step guide to creating and managing a skill from your coding agent, workflow recipes, triggers and the security model.
+See **AI Skills & Workflow Builder** in the [Docsie help center](https://help.docsie.io): what skills are, a step-by-step guide to creating and managing a skill from your coding agent, workflow recipes, triggers, apps and the security model.
 
 ## License
 

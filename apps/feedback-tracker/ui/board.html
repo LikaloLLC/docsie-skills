@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-mode="inline">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback board</title>
+<!--
+  Feedback Tracker: the "board" component.
+  Docsie loads this file into a sandboxed iframe (srcdoc, opaque origin) and talks to
+  it with the MCP Apps protocol (2026-01-26) over postMessage. Everything is inline:
+  one style block, one script block, inline SVG icons. No network, no storage, no
+  eval: the sandbox's Content Security Policy blocks them.
+  Script: 1 bridge (copy it into your app), 2 defaults, 3 state, 4 host lifecycle,
+  5 data, 6 view logic, 7 rendering, 8 interaction.
+-->
+<style>
+/* Folio tokens: light, then dark */
+:root{--paper:#F7F3EC;--paper-2:#F1EBE1;--surface:#FFF;--sunk:#EEE7DC;--line:#E6DED1;--line-2:#D8CDBC;--ink:#1D1915;--ink-2:#4B443C;--muted:#736859;--faint:#B4A999;
+--ember:#E4532C;--ember-2:#D94A24;--ember-ink:#B23D1B;--ember-wash:#FCEAE2;--ember-line:#F3C3B1;--danger:#B42318;--danger-wash:#FDECEA;--danger-line:#F5CFCB;
+--focus:rgba(228,83,44,.38);--hover:#FFFBF5;--scrim:rgba(29,25,21,.26);--tip:#1D1915;--tip-ink:#FFF;--ease:cubic-bezier(.2,.7,.2,1);
+--sh-1:0 1px 0 rgba(40,25,10,.03),0 10px 30px -18px rgba(60,35,15,.35);--sh-2:0 16px 40px -18px rgba(50,30,10,.45);--sh-3:0 30px 80px -30px rgba(40,20,5,.55);
+--f-display:Fraunces,Georgia,serif;--f-ui:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--f-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;color-scheme:light}
+[data-theme=dark]{--paper:#171310;--paper-2:#1D1915;--surface:#24201B;--sunk:#2F2923;--line:#37302A;--line-2:#4A4137;--ink:#F3EDE4;--ink-2:#D3C9BC;--muted:#A89B8B;--faint:#6F655A;
+--ember-2:#EE6540;--ember-ink:#F49A79;--ember-wash:#3A2219;--ember-line:#6A3524;--danger:#F08A80;--danger-wash:#3A1D1A;--danger-line:#6A2E28;
+--focus:rgba(240,113,74,.55);--hover:#2A251F;--scrim:rgba(0,0,0,.5);--tip:#F3EDE4;--tip-ink:#1D1915;
+--sh-1:0 10px 30px -18px rgba(0,0,0,.7);--sh-2:0 16px 40px -18px rgba(0,0,0,.85);--sh-3:0 30px 80px -30px rgba(0,0,0,.9);color-scheme:dark}
+
+/* Base and shared patterns */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--paper)}
+body{font:400 13px/1.45 var(--f-ui);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus{outline:none}
+:focus-visible{box-shadow:0 0 0 3px var(--focus)!important}
+.btn,.chip,.th-b,.seg-c button,.pick button,.sent,.stat,.mi,.toast,.hdr-m,.card-m,.card-f,.col-h,.slg span{display:inline-flex;align-items:center}
+.kebab,.th-b,.seg-c button,.pick button,.mi,.lnk,.col-mb,.toast button{border:0;background:none}
+.hdr h1,.hdr-m,.card-m span,.col-h .nm,.newest b,.newest span,.tbl td.x,.tbl td.t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.i.xs{width:12px;height:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ov{font:600 10px/1.3 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font:500 11px var(--f-mono)}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--faint);flex:none}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--faint));flex:none}
+#app{height:var(--app-h,600px);display:flex;flex-direction:column;overflow:hidden;position:relative}
+[data-mode=fullscreen] #app{height:100vh}
+
+/* Buttons */
+.btn{height:32px;justify-content:center;gap:6px;padding:0 11px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);font-weight:600;font-size:12.5px;white-space:nowrap}
+.btn:hover,.chip:hover{border-color:var(--faint)}
+.btn.primary{background:var(--ember);border-color:var(--ember);color:#fff;box-shadow:0 1px 0 var(--ember-ink),0 6px 14px -8px rgba(228,83,44,.8)}
+.btn.primary:hover{background:var(--ember-2)}
+.btn.ghost{background:none;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover,.kebab:hover,.th-b:hover,.col-mb:hover,.mi:hover,.mi:focus-visible{background:var(--sunk)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--paper)}
+.btn.sm{height:28px;padding:0 9px;font-size:12px}
+.btn.icon{width:32px;padding:0}
+.btn.sm.icon{width:26px;height:26px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.lnk{color:var(--ember-ink);font-weight:600;font-size:12px;padding:3px 6px;border-radius:6px}
+
+/* Header and summary strip */
+.hdr{flex:none;display:flex;align-items:center;gap:8px;padding:10px 10px 10px 16px;border-bottom:1px solid var(--line);min-height:56px}
+.hdr-t{flex:1;min-width:0}
+.hdr h1{margin:0;font:600 16.5px/1.25 var(--f-display);letter-spacing:-.01em}
+.hdr-m{gap:6px;margin-top:2px;font-size:11.5px;color:var(--muted);max-width:100%}
+.hdr-a{display:flex;gap:6px}
+.l-short{display:none}
+.sum{flex:none;display:flex;margin:10px 12px 0;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-1)}
+.sc{flex:none;padding:8px 14px 9px;min-width:0;border-left:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+.sc:first-child{border:0}
+.sc.grow{flex:1 1 0}
+.sc.sent-c{flex:1.6 1 0;min-width:220px}
+.sv{font:600 19px/1.15 var(--f-ui);margin-top:3px;white-space:nowrap}
+.sv small{font:500 11px var(--f-mono);color:var(--muted);margin-left:4px}
+.sbar{display:block;margin-top:7px}
+.sbar rect{stroke:var(--surface);stroke-width:2}
+.sbar .unset{fill:var(--line-2)}
+.slg{display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;font-size:11.5px;color:var(--ink-2)}
+.slg span{gap:5px}
+.slg b{color:var(--ink)}
+.newest{margin-top:3px}
+.newest b,.newest span{display:block;font-size:12.5px}
+.newest span{font-size:11.5px;color:var(--muted)}
+
+/* Toolbar */
+.bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px 8px}
+.seg-c{display:inline-flex;padding:2px;border-radius:9px;background:var(--sunk);gap:2px}
+.seg-c button{height:26px;padding:0 9px;border-radius:7px;gap:5px;color:var(--ink-2);font-size:12px}
+.seg-c [aria-pressed=true],.pick [aria-checked=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(40,25,10,.14)}
+.seg-c [aria-pressed=true] .i{color:var(--ember)}
+.input{height:30px;width:100%;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);font-size:12.5px}
+.input::placeholder{color:var(--muted)}
+.input:focus{border-color:var(--ember);box-shadow:0 0 0 3px var(--focus)}
+.input[aria-invalid=true]{border-color:var(--danger)}
+.search{position:relative;flex:1 1 150px;min-width:140px;max-width:300px}
+.search .i{position:absolute;left:9px;top:7px;color:var(--muted)}
+.search input{padding-left:29px}
+.filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.chip{height:28px;padding:0 10px 0 9px;border-radius:99px;border:1px solid var(--line-2);background:var(--surface);gap:6px;font-size:12px;color:var(--ink-2)}
+.chip b{font:500 10.5px var(--f-mono);color:var(--muted)}
+.chip[aria-pressed=true],.sel.on select{background:var(--ember-wash);border-color:var(--ember-line);color:var(--ember-ink);font-weight:600}
+.chip[aria-pressed=true] b{color:inherit}
+.sel,.selw{position:relative;display:inline-flex}
+select.input{appearance:none;-webkit-appearance:none;padding-right:28px;cursor:pointer}
+.sel select{height:28px;border-radius:99px;font-size:12px;color:var(--ink-2);max-width:170px}
+.sel .i,.selw .i{position:absolute;right:9px;top:8px;color:var(--muted);pointer-events:none}
+
+/* Board, columns and cards */
+.content{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.board{flex:1;min-height:0;display:flex;gap:10px;overflow:auto hidden;padding:2px 12px 12px}
+.col{flex:1 0 220px;max-width:340px;display:flex;flex-direction:column;min-height:0;background:var(--paper-2);border:1px solid var(--line);border-radius:12px}
+[data-mode=fullscreen] .col{max-width:none}
+.col-h{gap:7px;padding:8px 6px 6px 12px;min-height:38px}
+.col-h .nm{font-weight:600;font-size:12.5px}
+.col-h .n,.col-mb .n{font:500 10.5px var(--f-mono);color:var(--muted);background:var(--sunk);border-radius:5px;padding:1px 6px}
+.col-h .btn{margin-left:auto;color:var(--muted)}
+.col-b{flex:1;min-height:0;overflow-y:auto;padding:2px 8px 10px;display:flex;flex-direction:column;gap:7px}
+.col-e{border:1px dashed var(--line-2);border-radius:10px;padding:16px 10px;text-align:center;color:var(--muted);font-size:12px}
+.is-dragging .col{border-style:dashed}
+.col.over{background:var(--ember-wash);border:1px solid var(--ember)}
+.col.min{flex:0 0 42px}
+.col-mb{flex:1;border-radius:11px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;color:var(--ink-2)}
+.col-mb .nm{writing-mode:vertical-rl;font-weight:600;font-size:12px}
+.card{position:relative;flex:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px 8px 11px;box-shadow:0 6px 14px -12px rgba(60,35,15,.35);cursor:grab}
+.card:hover{border-color:var(--line-2)}
+.card.dragging{opacity:.35}
+.pending,tr.pending td{opacity:.6}
+.card-t{font-weight:600;line-height:1.35;padding-right:20px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.card-m{gap:6px;margin-top:3px;color:var(--muted);font-size:11.5px;width:100%}
+.card-f{gap:6px;margin-top:8px;min-height:20px;width:100%}
+.card-f .mono{margin-left:auto;color:var(--muted);font-size:10.5px}
+.kebab{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:6px;color:var(--muted);display:grid;place-items:center;opacity:0}
+.card:hover .kebab,.card:focus-within .kebab,tr:hover .kebab,tr:focus-within .kebab,.kebab[aria-expanded=true]{opacity:1}
+.card .spin{position:absolute;top:9px;right:9px;width:12px;height:12px;color:var(--muted)}
+.flash{animation:flash 2.6s var(--ease)}
+@keyframes flash{0%,55%{box-shadow:0 0 0 2px var(--ember),0 0 0 7px var(--focus);border-color:var(--ember)}}
+tr.flash td{animation:flash-row 2.6s var(--ease)}
+@keyframes flash-row{0%,55%{background:var(--ember-wash)}}
+/* Sentiment chip: colour and word, never colour alone */
+.sent{gap:5px;height:20px;padding:0 7px 0 6px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap;background:color-mix(in srgb,var(--c) 13%,transparent);color:color-mix(in srgb,var(--c) 72%,var(--ink))}
+.sent i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.sent.none{background:none;color:var(--faint);font-weight:500;padding:0}
+.stat{gap:6px}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-2);cursor:default}
+.confirm span{flex:1 0 auto;color:var(--danger);font-weight:600;font-size:12px}
+.confirm div{display:flex;gap:6px;margin-left:auto}
+
+/* List */
+.list{flex:1;min-height:0;overflow:auto;margin:2px 12px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-1)}
+.tbl{width:100%;border-spacing:0;font-size:12.5px}
+.tbl th{position:sticky;top:0;z-index:1;background:var(--surface);height:34px;padding:0 6px;text-align:left;border-bottom:1px solid var(--line-2)}
+.th-b{gap:4px;height:26px;padding:0 6px;border-radius:6px;font:600 10.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+[aria-sort] .th-b{color:var(--ink)}
+.tbl td{padding:7px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td{background:var(--hover)}
+.tbl td.t{white-space:normal;min-width:210px;max-width:360px}
+.tbl td.t b{display:block;overflow-wrap:anywhere}
+.tbl td.t span{display:block;color:var(--muted);font-size:11.5px;max-width:340px}
+.tbl td.x{max-width:160px;color:var(--ink-2)}
+.tbl .p3{display:none;font-style:normal;color:var(--ink-2)}
+.tbl td.d{font:500 11px var(--f-mono);color:var(--muted)}
+.tbl .a{width:40px;padding:0 6px}
+.tbl .a .kebab{position:static}
+.tbl tr.cf td{background:var(--danger-wash);cursor:default}
+.tbl tr.cf .confirm{margin:0;padding:0;border:0}
+
+/* Drawer */
+.scrim{position:absolute;inset:0;background:var(--scrim);z-index:50;animation:fade .2s}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(400px,100%);z-index:51;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--sh-3);animation:slide .24s var(--ease)}
+.drawer form{display:flex;flex-direction:column;height:100%}
+@keyframes fade{from{opacity:0}}
+@keyframes slide{from{transform:translateX(28px);opacity:0}}
+.dr-h{display:flex;align-items:flex-start;gap:8px;padding:14px 12px 12px 18px;border-bottom:1px solid var(--line)}
+.dr-h div{flex:1}
+.dr-h h2{margin:0;font:600 18px/1.25 var(--f-display);letter-spacing:-.01em}
+.dr-h p,.hint{margin:2px 0 0;color:var(--muted);font-size:11.5px}
+.dr-b{flex:1;min-height:0;overflow:auto;padding:14px 18px 16px;display:grid;grid-template-columns:1fr 1fr;gap:13px 12px;align-content:start}
+.fl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fl.wide{grid-column:1/-1}
+.fl label,.fl .lb{font-size:12px;font-weight:600;color:var(--ink-2)}
+.req{color:var(--ember-ink);margin-left:2px}
+.fl textarea{height:auto;padding:7px 10px;resize:vertical}
+.hint{margin:0}
+.hint.warn{color:var(--ember-ink);font-weight:500}
+.err{margin:0;font-size:11.5px;color:var(--danger);font-weight:600}
+.pick{display:flex;gap:2px;padding:2px;border-radius:9px;background:var(--sunk)}
+.pick button{flex:1;height:28px;border-radius:7px;justify-content:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.dr-f{display:flex;align-items:center;gap:6px;padding:10px 12px 10px 14px;border-top:1px solid var(--line);background:var(--paper)}
+.dr-f .sp{flex:1}
+.dr-f .cf{color:var(--danger);font-weight:600}
+.dr-f .mono{color:var(--muted)}
+
+/* Menu, toasts, states */
+.pop{position:fixed;z-index:70;width:max-content;max-height:calc(100vh - 16px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-2);padding:5px;min-width:200px}
+.mi{display:flex;gap:8px;width:100%;height:30px;padding:0 9px 0 7px;border-radius:7px;font-size:12.5px}
+.mi .ck{width:14px;color:var(--ember)}
+.mi kbd{margin-left:auto;font:500 10px var(--f-mono);color:var(--muted);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+.mi.danger{color:var(--danger)}
+.mi[aria-checked=true]{font-weight:600;cursor:default}
+.mh{padding:7px 9px 3px}
+.pop hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.toasts{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:60;width:max-content;max-width:calc(100% - 24px)}
+.toast{gap:10px;background:var(--tip);color:var(--tip-ink);padding:8px 8px 8px 12px;border-radius:11px;box-shadow:var(--sh-2);font-size:12.5px;animation:fade .2s}
+.toast.ok .i{color:#2F9E6A}
+.toast.error{background:var(--danger-wash);color:var(--danger);border:1px solid var(--danger-line)}
+.toast button{font-weight:600;padding:4px 6px;border-radius:6px;white-space:nowrap}
+.toast .tb{text-decoration:underline}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite;display:inline-block;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.state-c{max-width:400px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.state-c h2{margin:4px 0 0;font:600 18px/1.3 var(--f-display)}
+.state-c p{margin:0;color:var(--muted);font-size:12.5px}
+.state-ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--sunk);color:var(--ink-2)}
+.state-ic.err{background:var(--danger-wash);color:var(--danger)}
+.state-c pre{margin:4px 0 0;font:11px/1.45 var(--f-mono);background:var(--paper-2);border:1px solid var(--line);padding:8px 10px;border-radius:8px;white-space:pre-wrap;color:var(--ink-2)}
+.state-c .btn{margin-top:6px}
+.skel{height:62px;margin:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);animation:pulse 1.2s infinite}
+.skel-c{height:72px;flex:none;border-radius:10px;background:var(--surface);border:1px solid var(--line);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+
+/* Narrow inline widths */
+@media (max-width:700px){.l-long{display:none}.l-short{display:inline}}
+@media (max-width:800px){.tbl .p2{display:none}.tbl .p3{display:inline}}
+@media (max-width:640px){.newest-c,.chip b{display:none}.sel select{max-width:140px}.tbl td{padding:7px 8px}.tbl td.t{min-width:0}.tbl td.t span{max-width:190px}}
+@media (max-width:520px){.hdr .lbl{display:none}.hdr .lb{width:32px;padding:0}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M12 8.5l1.2 2.5 2.5 1-2.5 1-1.2 2.5-1.2-2.5-2.5-1 2.5-1z"/></symbol>
+<symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="i-collapse" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
+<symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4zM12 10v4M12 17h.01"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l1.5 3h5L16 13h5M5.5 5h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6z"/></symbol>
+</svg>
+<div id="app">
+  <header class="hdr" id="hdr"></header>
+  <section class="sum" id="sum" aria-label="Summary" hidden></section>
+  <div class="bar" id="bar" role="toolbar" aria-label="Layout and filters" hidden></div>
+  <main class="content" id="content"></main>
+  <div id="drawer"></div>
+  <div class="toasts" id="toasts"></div>
+  <div class="sr" id="sr" aria-live="polite"></div>
+  <p class="sr" id="kbd-hint">Enter edits. Shift with the left or right arrow moves the item to another status. Delete removes it.</p>
+</div>
+<div class="pop" id="pop" role="menu" hidden></div>
+<script>
+(() => {
+'use strict';
+
+/* ---- 1. BRIDGE: MCP Apps over postMessage (JSON-RPC 2.0, protocol 2026-01-26) ----
+   Copy this section into your own component. It gives you:
+     bridge.request(method, params)  -> Promise of the host's result
+     bridge.notify(method, params)      one-way message
+     bridge.on(method, handler)         handle a host notification or request
+     bridge.callTool(name, args)     -> Promise of structuredContent
+   Only messages from window.parent (the Docsie chat) are trusted. */
+const PROTOCOL_VERSION = '2026-01-26';
+const APP_INFO = {name: 'feedback-tracker', version: '1.0.0'};
+
+const bridge = (() => {
+  let nextId = 1;
+  const pending = new Map();   // request id -> {resolve, reject, timer}
+  const handlers = {};         // method -> handler(params)
+  const post = (msg) => window.parent.postMessage(msg, '*');
+
+  function request(method, params = {}, timeoutMs = 30000) {
+    const id = nextId++;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { pending.delete(id); reject(new Error(`Docsie did not answer ${method}.`)); }, timeoutMs);
+      pending.set(id, {resolve, reject, timer});
+      post({jsonrpc: '2.0', id, method, params});
+    });
+  }
+  const notify = (method, params) => post(params === undefined ? {jsonrpc: '2.0', method} : {jsonrpc: '2.0', method, params});
+  // For a host request (it carries an id), the handler's return value is the reply.
+  const on = (method, handler) => { handlers[method] = handler; };
+
+  // tools/call answers with a CallToolResult: {structuredContent} or {isError, content}.
+  async function callTool(name, args, timeoutMs) {
+    const res = await request('tools/call', {name, arguments: args}, timeoutMs);
+    if (!res || res.isError) throw new Error(resultText(res) || `${name} failed.`);
+    return res.structuredContent || {};
+  }
+
+  window.addEventListener('message', (event) => {
+    if (event.source !== window.parent) return;
+    const msg = event.data;
+    if (!msg || typeof msg !== 'object' || msg.jsonrpc !== '2.0') return;
+    if (typeof msg.method === 'string') {
+      const handler = Object.prototype.hasOwnProperty.call(handlers, msg.method) ? handlers[msg.method] : null;
+      if (msg.id === undefined || msg.id === null) { if (handler) handler(msg.params || {}); return; }  // notification
+      Promise.resolve().then(() => {                                                                  // request: always reply
+        if (!handler) throw Object.assign(new Error(`Method not found: ${msg.method}`), {code: -32601});
+        return handler(msg.params || {});
+      }).then((result) => post({jsonrpc: '2.0', id: msg.id, result: result || {}}),
+        (err) => post({jsonrpc: '2.0', id: msg.id, error: {code: err.code || -32603, message: String(err.message)}}));
+      return;
+    }
+    const call = pending.get(msg.id);                                                                 // a reply to us
+    if (!call) return;
+    pending.delete(msg.id);
+    clearTimeout(call.timer);
+    if (msg.error) call.reject(new Error(msg.error.message || 'Request failed.'));
+    else call.resolve(msg.result);
+  });
+  return {request, notify, on, callTool};
+})();
+
+function resultText(res) {
+  const part = res && Array.isArray(res.content) && res.content.find((c) => c && c.type === 'text');
+  return part ? String(part.text || '') : '';
+}
+
+/* ---- 2. DEFAULTS FOR THIS EXAMPLE ------------------------------------------
+   Labels, types and options come from the fields Docsie sends. These keys only
+   say which field plays which part on a card (with fallbacks by type), so you
+   can change app.json and the UI follows. */
+const TABLE = 'feedback';
+const ROLE_KEYS = {title: 'title', details: 'details', customer: 'customer', sentiment: 'sentiment', status: 'status', area: 'area', date: 'received'};
+const PAGE_SIZE = 200, MAX_ROWS = 2000, INLINE_HEIGHT = 600, MAX_INLINE_HEIGHT = 640;
+const PALETTE = ['#2F5FA8', '#E4532C', '#2A9D8F', '#C23B3B', '#C28A12', '#B5547F', '#6A4BA8', '#4E8A3E'];   // Folio chart order
+const COLORS = {
+  light: {positive: '#2A9D8F', neutral: '#8A8478', negative: '#C23B3B', new: '#2F5FA8', planned: '#6A4BA8', 'in progress': '#C28A12', done: '#4E8A3E', "won't do": '#8A8478'},
+  dark: {positive: '#35AE9F', neutral: '#A39C90', negative: '#E0625E', new: '#5486D2', planned: '#8C72D2', 'in progress': '#D6A032', done: '#68AA57', "won't do": '#A39C90'}
+};
+
+/* ---- 3. STATE -------------------------------------------------------------- */
+const S = {
+  phase: 'connecting',     // connecting -> waiting -> loading -> ready; or error / cancelled
+  error: null,             // {title, detail, retry: 'init' | 'load' | null}
+  inited: false, torn: false,
+  ctx: {theme: 'light', displayMode: 'inline', availableDisplayModes: ['inline']},
+  appName: 'Feedback Tracker',
+  table: null,             // {key, name}
+  fields: [],              // normalised fields, in app.json order
+  R: {},                   // role -> field: title, details, customer, sentiment, status, area, date
+  rows: [], total: 0,
+  input: {},               // the agent's arguments (tool-input)
+  savedView: undefined,    // hostContext.docsieViewState
+  viewApplied: false,
+  view: {layout: 'board', status: '', sentiments: [], area: '', q: '', sort: null},
+  drawer: null,            // {mode: 'add' | 'edit', id, opener, confirm}
+  menu: null,              // {id, key} of the open row menu
+  confirmId: null,         // row with an open inline delete confirm
+  flash: {id: null, until: 0},
+  busy: false              // "Summarize in chat" in flight
+};
+let tmpSeq = 0, lastSize = '';
+const $ = (sel) => document.querySelector(sel);
+
+/* ---- 4. HOST LIFECYCLE -----------------------------------------------------
+   ui/initialize -> ui/notifications/initialized, then the host sends
+   tool-input (the agent's arguments) and tool-result (the app's tables). */
+bridge.on('ui/notifications/tool-input', (p) => applyInput(p.arguments));
+bridge.on('ui/notifications/tool-result', onToolResult);
+bridge.on('ui/notifications/host-context-changed', applyContext);
+bridge.on('ui/notifications/tool-cancelled', () => { if (S.phase !== 'ready') { S.phase = 'cancelled'; render(); } });
+bridge.on('ui/resource-teardown', () => { flushView(); S.torn = true; return {}; });
+bridge.on('ping', () => ({}));
+
+async function init() {
+  S.phase = 'connecting'; S.error = null; render();
+  try {
+    const res = await bridge.request('ui/initialize', {
+      protocolVersion: PROTOCOL_VERSION,
+      appInfo: APP_INFO,
+      appCapabilities: {availableDisplayModes: ['inline', 'fullscreen']}
+    }, 20000) || {};
+    const hc = res.hostContext && typeof res.hostContext === 'object' ? res.hostContext : {};
+    S.savedView = hc.docsieViewState;   // Docsie extension: the view saved for this message
+    applyContext(hc);
+    bridge.notify('ui/notifications/initialized');
+    S.inited = true;
+    if (S.phase === 'connecting') S.phase = 'waiting';
+  } catch (e) {
+    if (S.phase === 'connecting') S.phase = 'error', S.error = {title: 'Couldn’t connect to Docsie', detail: e.message, retry: 'init'};
+  }
+  render();
+}
+
+// Theme, display mode and container size. Partial updates merge into S.ctx.
+function applyContext(c) {
+  if (!c || typeof c !== 'object') return;
+  for (const k of Object.keys(c)) if (k !== 'docsieViewState') S.ctx[k] = c[k];
+  const root = document.documentElement, d = S.ctx.containerDimensions || {};
+  root.dataset.theme = S.ctx.theme === 'dark' ? 'dark' : 'light';
+  root.dataset.mode = S.ctx.displayMode === 'fullscreen' ? 'fullscreen' : 'inline';
+  const h = +d.height > 0 ? Math.min(+d.height, MAX_INLINE_HEIGHT) : Math.min(INLINE_HEIGHT, +d.maxHeight || INLINE_HEIGHT);
+  root.style.setProperty('--app-h', Math.max(320, h) + 'px');
+  lastSize = '';
+  render();
+}
+
+function applyInput(args) {
+  if (!args || typeof args !== 'object') return;
+  S.input = args;
+  if (S.phase === 'ready') { applyInputView(true); render(); revealFlash(); }
+}
+
+// The agent's `status` sets the status filter; `highlight` marks one row.
+function applyInputView(withStatus) {
+  const {status, highlight} = S.input;
+  if (withStatus && statusOptions().includes(status)) S.view.status = status;
+  if (highlight != null && highlight !== '') flashRow(highlight);
+}
+
+function onToolResult(res) {
+  if (!res || typeof res !== 'object') return;
+  if (res.isError) return fail('Docsie couldn’t open the board', resultText(res) || 'The tool returned an error.');
+  const sc = res.structuredContent || {};
+  const tables = Array.isArray(sc.tables) ? sc.tables : [];
+  const table = tables.find((t) => t && t.key === TABLE) || tables[0];
+  const fields = table && Array.isArray(table.fields) ? table.fields.map(normField).filter(Boolean) : [];
+  if (!fields.length) return fail('No feedback table', 'The result has no table with fields. Check the tables in app.json and reinstall the app.');
+  if (sc.app && sc.app.name) S.appName = String(sc.app.name);
+  S.table = {key: String(table.key), name: String(table.name || table.key)};
+  S.fields = fields;
+  S.R = resolveRoles(fields);
+  if (sc.input && typeof sc.input === 'object' && !Object.keys(S.input).length) S.input = sc.input;
+  loadRows();
+}
+
+function fail(title, detail) { S.phase = 'error'; S.error = {title, detail, retry: null}; render(); }
+
+/* ---- 5. DATA: rows.list / rows.add / rows.update / rows.delete -------------
+   Changes show at once (optimistic) and roll back if Docsie refuses them. */
+async function loadRows() {
+  S.phase = 'loading'; S.error = null; render();
+  try {
+    const rows = [];
+    let total = 0;
+    for (let offset = 0; offset < MAX_ROWS; offset += PAGE_SIZE) {
+      const sc = await bridge.callTool('rows.list', {table: S.table.key, limit: PAGE_SIZE, offset}, 60000);
+      const page = Array.isArray(sc.rows) ? sc.rows : [];
+      rows.push(...page.map(normRow).filter(Boolean));
+      total = Number.isFinite(+sc.total) ? +sc.total : rows.length;
+      if (page.length < PAGE_SIZE || rows.length >= total) break;
+    }
+    S.rows = rows;
+    S.total = Math.max(total, rows.length);
+    S.phase = 'ready';
+    if (!S.viewApplied) {               // first load: a saved view wins over the agent's status
+      S.viewApplied = true;
+      const saved = parseView(S.savedView);
+      if (saved) Object.assign(S.view, saved);
+      applyInputView(!saved);
+      if (!S.R.status) S.view.layout = 'list';
+    }
+  } catch (e) {
+    S.phase = 'error'; S.error = {title: 'Couldn’t load the feedback', detail: e.message, retry: 'load'};
+  }
+  render();
+  revealFlash();
+}
+
+function normRow(r) {
+  if (!r || typeof r !== 'object' || r.id == null) return null;
+  return {id: r.id, data: Object.assign({}, r.data), created: String(r.created || ''), created_by: String(r.created_by || '')};
+}
+
+async function addRow(data) {
+  const tmp = {id: 'tmp_' + (++tmpSeq), data: Object.assign({}, data), created: new Date().toISOString(), created_by: '', pending: true};
+  const title = titleOf(tmp);
+  S.rows.unshift(tmp); S.total++;
+  render();
+  try {
+    const sc = await bridge.callTool('rows.add', {table: S.table.key, data});
+    const row = normRow(sc.row) || Object.assign({}, tmp, {pending: false});
+    S.rows[S.rows.indexOf(tmp)] = row;
+    flashRow(row.id);
+    announce(`Added “${title}”.`);
+  } catch (e) {
+    S.rows.splice(S.rows.indexOf(tmp), 1); S.total--;
+    toast('error', `Couldn’t add “${title}”. ${e.message}`, {label: 'Edit again', run: () => openDrawer('add', {values: data})});
+  }
+  render();
+  revealFlash();
+}
+
+async function updateRow(id, patch, done) {
+  const row = findRow(id);
+  if (!row || row.pending) return;
+  const before = {};
+  for (const k in patch) before[k] = row.data[k];
+  Object.assign(row.data, patch);
+  row.pending = true;
+  render();
+  try {
+    const sc = await bridge.callTool('rows.update', {table: S.table.key, id: row.id, data: patch});
+    if (sc.row && sc.row.data) Object.assign(row.data, sc.row.data);
+    announce(done);
+  } catch (e) {
+    for (const k in patch) if (row.data[k] === patch[k]) row.data[k] = before[k];   // undo only what this change set
+    toast('error', `Couldn’t save “${titleOf(row)}”. ${e.message} The change was undone.`);
+  }
+  row.pending = false;
+  render();
+}
+
+async function deleteRow(id) {
+  const i = S.rows.findIndex((r) => String(r.id) === String(id));
+  if (i < 0) return;
+  const [row] = S.rows.splice(i, 1);
+  S.total--; S.confirmId = null;
+  render();
+  try {
+    await bridge.callTool('rows.delete', {table: S.table.key, id: row.id});
+    announce(`Deleted “${titleOf(row)}”.`);
+  } catch (e) {
+    S.rows.splice(i, 0, row); S.total++;
+    render();
+    toast('error', `Couldn’t delete “${titleOf(row)}”. ${e.message}`);
+  }
+}
+
+function moveRow(id, status, keepFocus) {
+  const row = findRow(id), f = S.R.status;
+  if (!row || val(row, f) === status) return;
+  updateRow(row.id, {[f.key]: status}, `Moved “${titleOf(row)}” to ${status}.`);
+  const el = keepFocus && itemEl(id);
+  if (el) { el.focus({preventScroll: true}); reveal(el); }
+}
+
+function moveBy(id, step) {
+  const row = findRow(id), cols = statusOptions();
+  if (!row || row.pending) return;
+  const next = Math.max(0, cols.indexOf(val(row, S.R.status))) + step;
+  if (next < 0 || next >= cols.length) return announce(`Already in the ${step < 0 ? 'first' : 'last'} column.`);
+  moveRow(id, cols[next], true);
+}
+
+/* ---- 6. VIEW LOGIC: fields, roles, filters, sorting, the chat brief, saved view ---- */
+function normField(f) {
+  if (!f || typeof f !== 'object' || !f.key) return null;
+  const opts = f.config && Array.isArray(f.config.options) ? f.config.options : [];
+  return {key: String(f.key), label: String(f.label || f.key), type: String(f.type || 'text'), required: !!f.required, options: opts.map(String).filter(Boolean)};
+}
+
+function resolveRoles(fields) {
+  const pick = (role, test) => fields.find((f) => f.key === ROLE_KEYS[role]) || fields.find(test) || null;
+  const R = {
+    title: pick('title', (f) => f.type === 'text' && f.required) || fields.find((f) => f.type === 'text') || null,
+    details: pick('details', (f) => f.type === 'text' && /detail|descr|note|comment/i.test(f.key)),
+    customer: pick('customer', (f) => f.type === 'text' && /customer|account|company|client/i.test(f.key)),
+    sentiment: pick('sentiment', (f) => f.type === 'select' && /sentiment|mood|tone/i.test(f.key)),
+    status: pick('status', (f) => f.type === 'select' && /status|stage|state/i.test(f.key)),
+    area: pick('area', (f) => /area|product|component|category/i.test(f.key)),
+    date: pick('date', (f) => f.type === 'date')
+  };
+  for (const k of ['status', 'sentiment']) if (R[k] && !R[k].options.length) R[k] = null;   // need options to draw them
+  if (R.date && R.date.type !== 'date') R.date = null;
+  return R;
+}
+
+const val = (row, f) => (f && row.data[f.key] != null ? String(row.data[f.key]) : '');
+const titleOf = (row) => val(row, S.R.title) || 'Untitled';
+const findRow = (id) => S.rows.find((r) => String(r.id) === String(id)) || null;
+const statusOptions = () => (S.R.status ? S.R.status.options : []);
+const fieldByKey = (k) => S.fields.find((f) => f.key === k) || null;
+const flashRow = (id) => { S.flash = {id: String(id), until: Date.now() + 2600}; };
+const colorOf = (f, value) => COLORS[S.ctx.theme === 'dark' ? 'dark' : 'light'][String(value).toLowerCase()] || PALETTE[Math.max(0, f.options.indexOf(value)) % 8];
+
+// Apply the filters, optionally skipping one: facet counts skip their own
+// filter, and the board skips status because it shows statuses as columns.
+function filterRows(skip) {
+  const v = S.view, R = S.R, q = v.q.trim().toLowerCase();
+  return S.rows.filter((r) =>
+    (skip === 'status' || !v.status || val(r, R.status) === v.status) &&
+    (skip === 'sentiment' || !v.sentiments.length || v.sentiments.includes(val(r, R.sentiment))) &&
+    (!v.area || val(r, R.area) === v.area) &&
+    (!q || S.fields.some((f) => val(r, f).toLowerCase().includes(q))));
+}
+const visibleRows = () => filterRows('');
+const filtersActive = () => !!(S.view.status || S.view.sentiments.length || S.view.area || S.view.q.trim());
+function describeFilters() {
+  const v = S.view, R = S.R;
+  return [v.status && `${R.status.label} ${v.status}`, v.sentiments.length && `${R.sentiment.label} ${v.sentiments.join(' or ')}`,
+    v.area && `${R.area.label} ${v.area}`, v.q.trim() && `search “${v.q.trim()}”`].filter(Boolean).join('; ');
+}
+
+const dateOf = (row) => val(row, S.R.date) || row.created.slice(0, 10);
+const newestFirst = (a, b) => (dateOf(b) + b.created).localeCompare(dateOf(a) + a.created);
+function currentSort() {
+  if (S.view.sort && fieldByKey(S.view.sort.key)) return S.view.sort;
+  return S.R.date ? {key: S.R.date.key, dir: 'desc'} : {key: (S.R.title || S.fields[0]).key, dir: 'asc'};
+}
+function sortRows(rows, sort) {
+  const f = fieldByKey(sort.key), dir = sort.dir === 'asc' ? 1 : -1;
+  return rows.slice().sort((a, b) => {
+    const x = val(a, f), y = val(b, f);
+    if (!x || !y) return (!x - !y) || newestFirst(a, b);          // empty values last
+    const c = f.type === 'select' ? f.options.indexOf(x) - f.options.indexOf(y)
+      : f.type === 'number' ? x - y : x.localeCompare(y, undefined, {sensitivity: 'base', numeric: true});
+    return c * dir || newestFirst(a, b);
+  });
+}
+function countBy(rows, f) {
+  const m = new Map();
+  if (f) for (const r of rows) { const v = val(r, f); if (v) m.set(v, (m.get(v) || 0) + 1); }
+  return m;
+}
+function areaOptions() {
+  const f = S.R.area;
+  if (f.type === 'select') return f.options;
+  const m = countBy(S.rows, f), list = [...m.keys()].sort((a, b) => m.get(b) - m.get(a) || a.localeCompare(b));
+  return S.view.area && !m.has(S.view.area) ? [S.view.area].concat(list) : list;
+}
+const negativeOption = () => S.R.sentiment && S.R.sentiment.options.find((o) => /^neg/i.test(o));
+
+// "Summarize in chat" sends this brief as a user message: counts plus recent titles.
+function briefText() {
+  const rows = visibleRows(), R = S.R, n = rows.length, neg = negativeOption();
+  const counts = (f, limit) => {
+    const m = countBy(rows, f), keys = f.type === 'select' ? f.options.filter((o) => m.has(o)) : [...m.keys()].sort((a, b) => m.get(b) - m.get(a));
+    return keys.slice(0, limit).map((k) => `${k} ${m.get(k)}`).concat(keys.length > limit ? [`${keys.length - limit} more`] : []).join(', ') || 'none';
+  };
+  const lines = ['Summarize this customer feedback: main themes, what is most negative, and what to prioritise. Use only these items.', '',
+    `${S.appName}: ${n} item${n === 1 ? '' : 's'}${filtersActive() ? ` (filtered: ${describeFilters()})` : ''}.`];
+  if (R.sentiment) lines.push(`By ${R.sentiment.label.toLowerCase()}: ${counts(R.sentiment, 10)}` + (neg && n ? ` (${Math.round((countBy(rows, R.sentiment).get(neg) || 0) / n * 100)}% ${neg.toLowerCase()})` : '') + '.');
+  if (R.status) lines.push(`By ${R.status.label.toLowerCase()}: ${counts(R.status, 10)}.`);
+  if (R.area) lines.push(`By ${R.area.label.toLowerCase()}: ${counts(R.area, 8)}.`);
+  const recent = rows.slice().sort(newestFirst).slice(0, 15);
+  lines.push('', `${recent.length} most recent:`);
+  for (const r of recent) lines.push(`- ${[dateOf(r), val(r, R.sentiment), val(r, R.area), val(r, R.status)].filter(Boolean).join(' · ')}: ${titleOf(r).replace(/\s+/g, ' ').slice(0, 140)}`);
+  return lines.join('\n');
+}
+
+/* Saved view (Docsie extension). Send docsie/notifications/view-state when the
+   user changes the view; Docsie gives it back as hostContext.docsieViewState
+   when the message renders again. Check it piece by piece on the way in. */
+let viewTimer = 0, lastViewJson = '';
+function saveView() {
+  if (S.phase !== 'ready' || S.torn) return;
+  clearTimeout(viewTimer);
+  viewTimer = setTimeout(sendView, 400);
+}
+function flushView() { if (viewTimer) { clearTimeout(viewTimer); sendView(); } }
+function sendView() {
+  viewTimer = 0;
+  const v = S.view;
+  const state = {version: 1, table: S.table.key,
+    filters: {status: v.status || null, sentiment: v.sentiments.slice(), area: v.area || null, q: v.q},
+    layout: {view: v.layout, sort: v.sort ? {field: v.sort.key, dir: v.sort.dir} : null}};
+  const json = JSON.stringify(state);
+  if (json !== lastViewJson) { lastViewJson = json; bridge.notify('docsie/notifications/view-state', {state}); }
+}
+function parseView(raw) {
+  if (!raw || typeof raw !== 'object' || raw.version !== 1 || (raw.table && raw.table !== S.table.key)) return null;
+  const f = raw.filters || {}, l = raw.layout || {}, s = l.sort || {}, out = {};
+  if (statusOptions().includes(f.status)) out.status = f.status;
+  if (Array.isArray(f.sentiment) && S.R.sentiment) out.sentiments = f.sentiment.filter((x) => S.R.sentiment.options.includes(x));
+  if (typeof f.area === 'string' && S.R.area && f.area.length <= 200) out.area = f.area;
+  if (typeof f.q === 'string' && f.q.length <= 200) out.q = f.q;
+  if (l.view === 'board' || l.view === 'list') out.layout = l.view;
+  if (fieldByKey(s.field) && (s.dir === 'asc' || s.dir === 'desc')) out.sort = {key: s.field, dir: s.dir};
+  return Object.keys(out).length ? out : null;
+}
+
+/* ---- 7. RENDERING: HTML strings, every value through esc() ----------------- */
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const ic = (name, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const flashing = (id) => S.flash.id === String(id) && Date.now() < S.flash.until;
+const dot = (f, v) => `<i class="sdot" style="--c:${colorOf(f, v)}"></i>`;
+function todayISO() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function fmtDate(iso) {
+  const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(iso || ''), opts = {day: 'numeric', month: 'short', timeZone: 'UTC'};
+  if (!m) return iso || '';
+  if (+m[1] !== new Date().getFullYear()) opts.year = 'numeric';
+  try { return new Date(Date.UTC(m[1], m[2] - 1, m[3])).toLocaleDateString(S.ctx.locale || undefined, opts); } catch (e) { return m[0]; }
+}
+function relDate(iso) {
+  const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(iso || ''), t = new Date();
+  const days = m ? Math.round((Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Date.UTC(m[1], m[2] - 1, m[3])) / 864e5) : -1;
+  return days === 0 ? 'today' : days === 1 ? 'yesterday' : days > 1 && days < 7 ? `${days} days ago` : fmtDate(iso);
+}
+
+function render() {
+  const keep = captureUI();
+  renderHeader(); renderSummary(); renderBar(); renderContent(); renderToasts();
+  restoreUI(keep);
+  if (S.inited) requestAnimationFrame(reportSize);
+}
+
+function renderHeader() {
+  const ready = S.phase === 'ready', fs = S.ctx.displayMode === 'fullscreen';
+  const canFs = (S.ctx.availableDisplayModes || []).includes('fullscreen');
+  const meta = S.table ? `${ready ? `<span class="mono">${plural(S.total, 'item')}</span><i class="dot"></i>` : ''}<span>${esc(S.table.name)}</span>`
+    : S.phase === 'connecting' ? 'Connecting to Docsie…' : 'Opening the board…';
+  $('#hdr').innerHTML = `<div class="hdr-t"><h1>${esc(S.appName)}</h1><div class="hdr-m">${meta}</div></div><div class="hdr-a">` +
+    `<button class="btn primary lb" data-act="add" aria-label="Add feedback"${ready ? '' : ' disabled'}>${ic('plus')}<span class="lbl">Add feedback</span></button>` +
+    `<button class="btn lb" data-act="summarize" aria-label="Summarize in chat"${ready && !S.busy && visibleRows().length ? '' : ' disabled'}>${S.busy ? '<span class="spin"></span>' : ic('spark')}` +
+    '<span class="lbl"><span class="l-long">Summarize in chat</span><span class="l-short">Summarize</span></span></button>' +
+    (canFs ? `<button class="btn ghost icon" data-act="fullscreen" aria-pressed="${fs}" aria-label="${fs ? 'Exit full screen' : 'Full screen'}">${ic(fs ? 'collapse' : 'expand')}</button>` : '') + '</div>';
+}
+
+function renderSummary() {
+  const el = $('#sum'), R = S.R;
+  el.hidden = S.phase !== 'ready' || !S.rows.length;
+  if (el.hidden) return;
+  const rows = visibleRows(), n = rows.length, f = filtersActive();
+  let html = `<div class="sc"><span class="ov">${f ? 'Showing' : 'Total'}</span><div class="sv">${n}<small>${f ? `of ${S.rows.length}` : n === 1 ? 'item' : 'items'}</small></div></div>`;
+  if (R.sentiment) {
+    // A 100% stacked bar: one rect per option, widths in percent, clipped to a pill.
+    const counts = countBy(rows, R.sentiment), opts = R.sentiment.options, neg = negativeOption(), c = counts.get(neg) || 0;
+    let x = 0, segs = '';
+    for (const o of opts) {
+      const w = n ? (counts.get(o) || 0) / n * 100 : 0;
+      if (w) segs += `<rect x="${x}%" width="${w}%" height="8" fill="${colorOf(R.sentiment, o)}"><title>${esc(o)}: ${counts.get(o)}</title></rect>`;
+      x += w;
+    }
+    if (n && x < 99.9) segs += `<rect class="unset" x="${x}%" width="${100 - x}%" height="8"><title>Not set</title></rect>`;
+    html += `<div class="sc sent-c"><span class="ov">${esc(R.sentiment.label)}</span>` +
+      `<svg class="sbar" width="100%" height="8" role="img" aria-label="${esc(opts.map((o) => `${counts.get(o) || 0} ${o}`).join(', '))}"><clipPath id="sbclip"><rect width="100%" height="8" rx="4"/></clipPath><g clip-path="url(#sbclip)">${segs}</g></svg>` +
+      `<div class="slg">${opts.map((o) => `<span>${dot(R.sentiment, o)}${esc(o)} <b>${counts.get(o) || 0}</b></span>`).join('')}</div></div>`;
+    if (neg) html += `<div class="sc"><span class="ov">${esc(neg)}</span><div class="sv">${n ? Math.round(c / n * 100) : 0}%<small>${c} of ${n}</small></div></div>`;
+  }
+  const newest = rows.slice().sort(newestFirst)[0];
+  if (newest) {
+    html += `<div class="sc grow newest-c"><span class="ov">Newest</span><div class="newest" title="${esc(titleOf(newest))}"><b>${esc(titleOf(newest))}</b>` +
+      `<span>${esc([val(newest, R.customer), relDate(dateOf(newest))].filter(Boolean).join(' · '))}</span></div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderBar() {
+  const el = $('#bar'), v = S.view, R = S.R;
+  el.hidden = S.phase !== 'ready' || !S.rows.length;
+  if (el.hidden) return;
+  const select = (f, key, options, current) => `<label class="sel${current ? ' on' : ''}"><span class="sr">${esc(f.label)}</span><select class="input" data-ch="${key}">` +
+    `<option value="">Any ${esc(f.label.toLowerCase())}</option>${options.map((o) => `<option${o === current ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>${ic('down', 'xs')}</label>`;
+  const layout = (id, label) => `<button data-act="layout" data-v="${id}" aria-pressed="${v.layout === id}"${id === 'board' && !R.status ? ' disabled' : ''}>${ic(id)}${label}</button>`;
+  const counts = countBy(filterRows('sentiment'), R.sentiment);
+  el.innerHTML = `<div class="seg-c" role="group" aria-label="Layout">${layout('board', 'Board')}${layout('list', 'List')}</div>` +
+    `<label class="search">${ic('search')}<span class="sr">Search feedback</span><input class="input" type="search" data-in="q" placeholder="Search feedback" value="${esc(v.q)}" autocomplete="off"></label>` +
+    '<div class="filters">' +
+    (R.sentiment ? R.sentiment.options.map((o) => `<button class="chip" data-act="sent" data-v="${esc(o)}" aria-pressed="${v.sentiments.includes(o)}">${dot(R.sentiment, o)}${esc(o)}<b>${counts.get(o) || 0}</b></button>`).join('') : '') +
+    (R.area ? select(R.area, 'area', areaOptions(), v.area) : '') +
+    (R.status ? select(R.status, 'status', R.status.options, v.status) : '') +
+    (filtersActive() ? '<button class="lnk" data-act="clear">Clear filters</button>' : '') + '</div>';
+}
+
+function renderContent() {
+  const el = $('#content'), E = S.error || {};
+  if (['connecting', 'waiting', 'loading'].includes(S.phase)) {
+    const col = (k) => `<div class="col"><div class="col-h"></div><div class="col-b">${'<div class="skel-c"></div>'.repeat(k)}</div></div>`;
+    el.innerHTML = `<div class="skel"></div><div class="board" aria-busy="true" aria-label="Loading feedback">${col(3) + col(2) + col(3) + col(1)}</div>`;
+  } else if (S.phase === 'error') {
+    el.innerHTML = stateHTML('alert', E.title, '', E.detail, E.retry ? '<button class="btn" data-act="retry">Try again</button>' : '');
+  } else if (S.phase === 'cancelled') {
+    el.innerHTML = stateHTML('x', 'Request cancelled', 'Ask Docsie to open the feedback board again.');
+  } else if (!S.rows.length) {
+    el.innerHTML = stateHTML('inbox', 'No feedback yet', 'Add the first item here, or ask Docsie to log feedback from a call, an email or a support ticket.', '',
+      `<button class="btn primary" data-act="add">${ic('plus')}Add feedback</button>`);
+  } else if (!visibleRows().length && (S.view.layout === 'list' || !S.view.status)) {
+    el.innerHTML = stateHTML('search', 'No feedback matches', `Nothing matches ${esc(describeFilters())}.`, '', '<button class="btn" data-act="clear">Clear filters</button>');
+  } else {
+    el.innerHTML = S.view.layout === 'board' && S.R.status ? boardHTML() : listHTML();
+  }
+}
+
+function stateHTML(icon, title, text, detail, action = '') {
+  const err = icon === 'alert';
+  return `<div class="state"><div class="state-c" role="${err ? 'alert' : 'status'}"><div class="state-ic${err ? ' err' : ''}">${ic(icon)}</div>` +
+    `<h2>${esc(title)}</h2>${text ? `<p>${text}</p>` : ''}${detail ? `<pre>${esc(detail)}</pre>` : ''}${action}</div></div>`;
+}
+
+// One column per status option. Rows without a known status join the first column.
+function boardHTML() {
+  const opts = statusOptions(), groups = new Map(opts.map((o) => [o, []]));
+  for (const r of filterRows('status').sort(newestFirst)) (groups.get(val(r, S.R.status)) || groups.get(opts[0])).push(r);
+  return `<div class="board" id="board" aria-describedby="kbd-hint">${[...groups].map(([status, list]) => colHTML(status, list)).join('')}</div>`;
+}
+
+function colHTML(status, list) {
+  const name = esc(status), head = `${dot(S.R.status, status)}<span class="nm">${name}</span><span class="n">${list.length}</span>`;
+  if (S.view.status && status !== S.view.status) {   // filtered out: a slim rail that still takes drops
+    return `<section class="col min" data-status="${name}"><button class="col-mb" data-act="unfilter" data-status="${name}" title="Show all statuses" ` +
+      `aria-label="${name}, ${plural(list.length, 'item')}. Show all statuses.">${head}</button></section>`;
+  }
+  return `<section class="col" data-status="${name}" aria-label="${name}"><div class="col-h">${head}` +
+    `<button class="btn ghost sm icon" data-act="add" data-status="${name}" aria-label="Add feedback to ${name}">${ic('plus')}</button></div>` +
+    `<div class="col-b">${list.length ? list.map(cardHTML).join('') : `<div class="col-e">${filtersActive() ? 'Nothing here' : 'Drag items here'}</div>`}</div></section>`;
+}
+
+function cardHTML(r) {
+  const R = S.R, id = esc(r.id), title = esc(titleOf(r)), date = val(r, R.date);
+  const meta = [val(r, R.customer), val(r, R.area)].filter(Boolean).map((m) => `<span>${esc(m)}</span>`).join('<i class="dot"></i>');
+  const confirming = S.confirmId === String(r.id);
+  return `<article class="card${r.pending ? ' pending' : ''}${flashing(r.id) ? ' flash' : ''}" data-act="open" data-id="${id}" data-status="${esc(val(r, R.status))}" ` +
+    `tabindex="0" draggable="${!r.pending && !confirming}" aria-label="${title}" aria-describedby="kbd-hint"><div class="card-t">${title}</div>` +
+    (meta ? `<div class="card-m">${meta}</div>` : '') +
+    (confirming ? confirmHTML(id) : `<div class="card-f">${sentHTML(val(r, R.sentiment))}${date ? `<span class="mono">${esc(fmtDate(date))}</span>` : ''}</div>`) +
+    (r.pending ? '<span class="spin"></span>' : kebabHTML(id, title)) + '</article>';
+}
+const kebabHTML = (id, title) => `<button class="kebab" data-act="menu" data-id="${id}" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for ${title}">${ic('dots')}</button>`;
+const confirmHTML = (id) => `<div class="confirm" data-stop="1"><span>Delete this item?</span>` +
+  `<div><button class="btn sm" data-act="del-no" data-id="${id}">Cancel</button><button class="btn sm danger" data-act="del-yes" data-id="${id}">Delete</button></div></div>`;
+const sentHTML = (v) => (!S.R.sentiment ? '' : v ? `<span class="sent" style="--c:${colorOf(S.R.sentiment, v)}"><i></i>${esc(v)}</span>`
+  : `<span class="sent none">No ${esc(S.R.sentiment.label.toLowerCase())}</span>`);
+
+function cellHTML(r, f) {
+  const v = val(r, f);
+  if (f === S.R.title) {   // narrow widths hide the other text columns and show them here instead
+    const more = S.fields.filter((x) => x.type === 'text' && x !== f && x !== S.R.details).map((x) => val(r, x)).filter(Boolean).join(' · ');
+    return `<td class="t"><b>${esc(titleOf(r))}</b><span>${more ? `<i class="p3">${esc(more)} · </i>` : ''}${esc(val(r, S.R.details))}</span></td>`;
+  }
+  if (f === S.R.sentiment) return `<td>${sentHTML(v)}</td>`;
+  if (f.type === 'select') return `<td>${v ? `<span class="stat">${dot(f, v)}${esc(v)}</span>` : ''}</td>`;
+  if (f.type === 'date') return `<td class="d">${esc(fmtDate(v))}</td>`;
+  if (f.type === 'checkbox') return `<td>${r.data[f.key] ? ic('check') : ''}</td>`;
+  return `<td class="x${f.type === 'number' ? '' : ' p2'}" title="${esc(v)}">${esc(v)}</td>`;
+}
+
+function listHTML() {
+  const R = S.R, sort = currentSort();
+  const cols = [R.title].concat(S.fields.filter((f) => f !== R.title && f !== R.details)).filter(Boolean);
+  const head = cols.map((f) => {
+    const on = sort.key === f.key;
+    return `<th scope="col"${f.type === 'text' && f !== R.title ? ' class="p2"' : ''}${on ? ` aria-sort="${sort.dir === 'asc' ? 'ascending' : 'descending'}"` : ''}>` +
+      `<button class="th-b" data-act="sort" data-k="${esc(f.key)}">${esc(f.label)}${on ? ic(sort.dir === 'asc' ? 'up' : 'down', 'xs') : ''}</button></th>`;
+  }).join('');
+  const body = sortRows(visibleRows(), sort).map((r) => {
+    const id = esc(r.id), title = esc(titleOf(r));
+    return `<tr class="${r.pending ? 'pending' : ''}${flashing(r.id) ? ' flash' : ''}" data-act="open" data-id="${id}" tabindex="0" aria-label="${title}">` +
+      cols.map((f) => cellHTML(r, f)).join('') + `<td class="a">${r.pending ? '<span class="spin"></span>' : kebabHTML(id, title)}</td></tr>` +
+      (S.confirmId === String(r.id) ? `<tr class="cf"><td colspan="${cols.length + 1}">${confirmHTML(id)}</td></tr>` : '');
+  }).join('');
+  return `<div class="list" id="list"><table class="tbl"><thead><tr>${head}<th class="a"><span class="sr">Actions</span></th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+/* The add / edit drawer is rendered only when it opens, so typing is never lost. */
+function openDrawer(mode, opts = {}) {
+  closeMenu();
+  const row = mode === 'edit' ? findRow(opts.id) : null;
+  if (mode === 'edit' && (!row || row.pending)) return;
+  const values = {};
+  for (const f of S.fields) values[f.key] = row ? row.data[f.key] : '';
+  if (!row) {
+    if (S.R.status) values[S.R.status.key] = opts.status || S.view.status || statusOptions()[0];
+    if (S.R.date) values[S.R.date.key] = todayISO();
+    Object.assign(values, opts.values);
+  }
+  S.drawer = {mode, id: row && String(row.id), opener: keyOf(document.activeElement), confirm: false};
+  const sub = row ? `Added ${relDate(row.created)}${row.created_by ? ` by ${row.created_by}` : ''}` : `Saved to ${S.table.name}.`;
+  $('#drawer').innerHTML = '<div class="scrim" data-act="close"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title"><form id="dr-form" novalidate autocomplete="off">' +
+    `<div class="dr-h"><div><h2 id="dr-title">${row ? 'Edit feedback' : 'Add feedback'}</h2><p>${esc(sub)}</p></div><button type="button" class="btn ghost icon sm" data-act="close" aria-label="Close">${ic('x')}</button></div>` +
+    `<div class="dr-b">${formHTML(values)}</div><div class="dr-f" id="dr-f"></div></form></aside>`;
+  renderDrawerFooter();
+  checkTitle();
+  $('#dr-form .input, #dr-form .pick button').focus();
+}
+
+// One control per field type. The title, long text and option pickers span
+// both columns; other controls pair up, two per row.
+function formHTML(values) {
+  const R = S.R, F = S.fields;
+  const isLong = (f) => f.type === 'text' && (f === R.details || /detail|descr|note|comment/i.test(f.key));
+  const isPick = (f) => f.type === 'select' && f.options.length <= 4;
+  const wide = F.map((f) => f === R.title || isLong(f) || isPick(f));
+  for (let i = 0; i < F.length; i++) {
+    if (wide[i]) continue;
+    if (i + 1 < F.length && !wide[i + 1]) i++;                      // pair with the next short field
+    else if (!['date', 'number', 'checkbox'].includes(F[i].type)) wide[i] = true;
+  }
+  return F.map((f, i) => {
+    const k = esc(f.key), id = `fld-${k}`, v = values[f.key] == null ? '' : values[f.key];
+    const label = esc(f.label) + (f.required ? '<span class="req" aria-hidden="true">*</span>' : '');
+    const attrs = `id="${id}" name="${k}" aria-describedby="err-${k}${f === R.title ? ` hint-${k}` : ''}"${f.required ? ' aria-required="true"' : ''}`;
+    let control = `<label for="${id}">${label}</label>`;
+    if (isPick(f)) {         // a segmented picker; a hidden input carries the value
+      control = `<span class="lb" id="${id}">${label}</span><input type="hidden" name="${k}" value="${esc(v)}"><div class="pick" role="radiogroup" aria-labelledby="${id}">` +
+        f.options.map((o) => `<button type="button" role="radio" aria-checked="${o === v}" data-act="pick" data-k="${k}" data-v="${esc(o)}">${dot(f, o)}${esc(o)}</button>`).join('') + '</div>';
+    } else if (f.type === 'select') {
+      control += `<div class="selw"><select class="input" ${attrs}>${f.required ? '' : '<option value="">Not set</option>'}` +
+        f.options.map((o) => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('') + `</select>${ic('down', 'xs')}</div>`;
+    } else if (f.type === 'checkbox') {
+      control = `<label><input type="checkbox" ${attrs}${v ? ' checked' : ''}> ${label}</label>`;
+    } else if (isLong(f)) {
+      control += `<textarea class="input" rows="3" maxlength="5000" ${attrs}>${esc(v)}</textarea>`;
+    } else {
+      const type = ['number', 'date', 'email', 'url'].includes(f.type) ? f.type : 'text';
+      control += `<input class="input" type="${type}" maxlength="5000" ${attrs} value="${esc(v)}"${f === R.title ? ' placeholder="What the customer asked for, in a few words"' : ''}>`;
+    }
+    return `<div class="fl${wide[i] ? ' wide' : ''}">${control}${f === R.title ? `<p class="hint" id="hint-${k}"></p>` : ''}<p class="err" id="err-${k}" hidden></p></div>`;
+  }).join('');
+}
+
+function renderDrawerFooter() {
+  const D = S.drawer, el = $('#dr-f');
+  if (D.confirm) {
+    el.innerHTML = '<span class="cf">Delete this item?</span><span class="sp"></span><button type="button" class="btn" data-act="dr-del-no">Keep it</button><button type="button" class="btn danger" data-act="dr-del-yes">Delete</button>';
+    return el.querySelector('.btn').focus();
+  }
+  el.innerHTML = (D.mode === 'edit' ? `<button type="button" class="btn ghost" data-act="dr-del" style="color:var(--danger)">${ic('trash')}Delete</button>` : '<span class="mono">Ctrl+Enter saves</span>') +
+    `<span class="sp"></span><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">${D.mode === 'edit' ? 'Save changes' : 'Add feedback'}</button>`;
+}
+
+function closeDrawer(refocus = true) {
+  const D = S.drawer;
+  S.drawer = null;
+  $('#drawer').innerHTML = '';
+  if (refocus && D) focusKey(D.opener);
+}
+
+/* Toasts and screen-reader announcements */
+const TOASTS = [];
+let toastSeq = 0;
+function toast(kind, text, action) {
+  const t = {id: 't' + (++toastSeq), kind, text, action};
+  t.timer = setTimeout(() => dismiss(t.id), kind === 'error' ? 9000 : 4000);
+  TOASTS.push(t);
+  if (TOASTS.length > 3) clearTimeout(TOASTS.shift().timer);
+  renderToasts();
+  announce(text);
+}
+function dismiss(id) { const i = TOASTS.findIndex((t) => t.id === id); if (i >= 0) { clearTimeout(TOASTS[i].timer); TOASTS.splice(i, 1); renderToasts(); } }
+function renderToasts() {
+  $('#toasts').innerHTML = TOASTS.map((t) => `<div class="toast ${t.kind}">${ic(t.kind === 'ok' ? 'check' : 'alert')}<span>${esc(t.text)}</span>` +
+    (t.action ? `<button class="tb" data-act="toast" data-id="${t.id}">${esc(t.action.label)}</button>` : '') +
+    `<button data-act="toast-x" data-id="${t.id}" aria-label="Dismiss">${ic('x', 'xs')}</button></div>`).join('');
+}
+function announce(text) { const el = $('#sr'); el.textContent = ''; setTimeout(() => { el.textContent = text; }, 30); }
+
+/* Re-rendering replaces the markup, so remember focus, caret and scroll
+   positions first. An element's key is built from its data attributes. */
+const keyOf = (el) => (el && el.dataset && (el.dataset.act || el.dataset.ch || el.dataset.in) ? [el.dataset.act || el.dataset.ch || el.dataset.in, el.dataset.id || el.dataset.v || el.dataset.k || el.dataset.status || ''].join(':') : '');
+function focusKey(key) {
+  const el = key && [...document.querySelectorAll('[data-act], [data-ch], [data-in]')].find((x) => keyOf(x) === key);
+  if (el && document.activeElement !== el) el.focus({preventScroll: true});
+  return el;
+}
+function captureUI() {
+  const a = document.activeElement, keep = {cols: {}, key: a && !a.closest('#drawer, #pop') && keyOf(a)};
+  if (keep.key && a.type === 'search') keep.sel = [a.selectionStart, a.selectionEnd];
+  keep.bx = ($('#board') || {}).scrollLeft;
+  keep.ly = ($('#list') || {}).scrollTop;
+  document.querySelectorAll('.col-b').forEach((el) => { keep.cols[el.parentElement.dataset.status] = el.scrollTop; });
+  return keep;
+}
+function restoreUI(keep) {
+  if ($('#board')) $('#board').scrollLeft = keep.bx || 0;
+  if ($('#list')) $('#list').scrollTop = keep.ly || 0;
+  document.querySelectorAll('.col-b').forEach((el) => { el.scrollTop = keep.cols[el.parentElement.dataset.status] || 0; });
+  const el = focusKey(keep.key);
+  if (el && keep.sel) el.setSelectionRange(keep.sel[0], keep.sel[1]);
+}
+const itemEl = (id) => [...document.querySelectorAll('.card, tr[data-id]')].find((x) => x.dataset.id === String(id));
+
+// Scroll an element into view inside its own scroll boxes, never the chat page.
+function reveal(el) {
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    const r = el.getBoundingClientRect(), pr = p.getBoundingClientRect();
+    if (p.scrollHeight > p.clientHeight + 1 && (r.top < pr.top + 34 || r.bottom > pr.bottom)) p.scrollTop += r.top - pr.top - (pr.height - r.height) / 2;
+    if (p.scrollWidth > p.clientWidth + 1 && (r.left < pr.left || r.right > pr.right)) p.scrollLeft += r.left - pr.left - Math.max(12, (pr.width - r.width) / 2);
+  }
+}
+function revealFlash() {
+  if (S.phase === 'ready' && S.flash.id && Date.now() < S.flash.until) requestAnimationFrame(() => { const el = itemEl(S.flash.id); if (el) reveal(el); });
+}
+
+/* ---- 8. INTERACTION -------------------------------------------------------- */
+function setView(patch) { Object.assign(S.view, patch); S.confirmId = null; render(); saveView(); }
+const clearFilters = () => setView({status: '', sentiments: [], area: '', q: ''});
+function askDelete(id) { S.confirmId = String(id); render(); focusKey(`del-no:${id}`); }
+function cancelDelete() { const id = S.confirmId; S.confirmId = null; render(); focusKey(`open:${id}`); }
+
+// One click handler for the whole app: elements say what they do with data-act.
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act]');
+  if (!t || t.disabled) return;
+  const id = t.dataset.id, m = S.menu;
+  switch (t.dataset.act) {
+    case 'add': return openDrawer('add', {status: t.dataset.status});
+    case 'open': return e.target.closest('[data-stop]') || openDrawer('edit', {id});
+    case 'menu': return m && m.id === id ? closeMenu(true) : openMenu(t, id);
+    case 'summarize': return summarize();
+    case 'fullscreen': return toggleFullscreen();
+    case 'retry': return S.error.retry === 'init' ? init() : loadRows();
+    case 'layout': return setView({layout: t.dataset.v});
+    case 'sent': {
+      const v = t.dataset.v, list = S.view.sentiments.filter((x) => x !== v);
+      return setView({sentiments: list.length < S.view.sentiments.length ? list : list.concat(v)});
+    }
+    case 'clear': clearFilters(); return focusKey('q:');
+    case 'unfilter': return setView({status: ''});
+    case 'sort': {
+      const cur = currentSort(), k = t.dataset.k, first = ['date', 'number'].includes(fieldByKey(k).type) ? 'desc' : 'asc';
+      return setView({sort: {key: k, dir: cur.key !== k ? first : cur.dir === 'asc' ? 'desc' : 'asc'}});
+    }
+    case 'del-no': return cancelDelete();
+    case 'del-yes': return deleteRow(id);
+    case 'm-edit': closeMenu(); return openDrawer('edit', {id: m.id});
+    case 'm-move': closeMenu(true); return moveRow(m.id, t.dataset.v);
+    case 'm-del': closeMenu(); return askDelete(m.id);
+    case 'close': return closeDrawer();
+    case 'pick': {                       // option picker: click the chosen option again to clear it
+      const input = $('#dr-form').elements[t.dataset.k], on = input.value === t.dataset.v;
+      input.value = on ? '' : t.dataset.v;
+      t.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(!on && b === t)));
+      return;
+    }
+    case 'dr-del': S.drawer.confirm = true; return renderDrawerFooter();
+    case 'dr-del-no': S.drawer.confirm = false; renderDrawerFooter(); return $('[data-act=dr-del]').focus();
+    case 'dr-del-yes': { const D = S.drawer; closeDrawer(false); return deleteRow(D.id); }
+    case 'toast': { const a = TOASTS.find((x) => x.id === id).action; dismiss(id); return a.run(); }
+    case 'toast-x': return dismiss(id);
+  }
+});
+
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.in === 'q') return setView({q: t.value});
+  if (t.form) { setError(t.name, ''); if (S.R.title && t.name === S.R.title.key) checkTitle(); }
+});
+document.addEventListener('change', (e) => { const k = e.target.dataset.ch; if (k) setView({[k]: e.target.value}); });
+document.addEventListener('submit', (e) => { e.preventDefault(); saveDrawer(); });   // never a real form submit
+
+// The title shows everywhere, so nudge people to keep personal data out of it.
+function checkTitle() {
+  const f = S.R.title, input = f && $(`#dr-form [name="${f.key}"]`);
+  if (!input) return;
+  const pii = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i.test(input.value) || /\+?\d[\d ().-]{7,}\d/.test(input.value);
+  const hint = $(`#hint-${f.key}`);
+  hint.classList.toggle('warn', pii);
+  hint.textContent = pii ? 'This looks like an email address or phone number. Keep personal data out of the title.' : 'Keep names, emails and phone numbers out of the title.';
+}
+
+function setError(key, text) {
+  const err = $(`#err-${key}`), control = $(`#dr-form [name="${key}"]:not([type=hidden])`);
+  if (!err) return;
+  err.textContent = text;
+  err.hidden = !text;
+  if (control) control.setAttribute('aria-invalid', String(!!text));
+}
+
+function saveDrawer() {
+  const D = S.drawer, form = $('#dr-form'), values = {}, errors = {};
+  if (!D) return;
+  for (const f of S.fields) {
+    const el = form.elements[f.key], v = f.type === 'checkbox' ? el.checked : el.value.trim();
+    values[f.key] = v;
+    if (f.required && (v === '' || v === false)) errors[f.key] = `${f.label} is required.`;
+    else if (v && f.type === 'date' && !/^\d{4}-\d\d-\d\d$/.test(v)) errors[f.key] = `Use a date like ${todayISO()}.`;
+    else if (v && f.type === 'number' && !Number.isFinite(+v)) errors[f.key] = `${f.label} must be a number.`;
+  }
+  S.fields.forEach((f) => setError(f.key, errors[f.key] || ''));
+  const bad = S.fields.find((f) => errors[f.key]);
+  if (bad) {
+    ($(`#dr-form [name="${bad.key}"]:not([type=hidden])`) || $(`#dr-form [data-k="${bad.key}"]`)).focus();
+    return announce(errors[bad.key]);
+  }
+  const out = (f) => (values[f.key] === '' ? null : f.type === 'number' ? +values[f.key] : values[f.key]);
+  const row = D.mode === 'edit' && findRow(D.id), data = {};
+  for (const f of S.fields) {
+    if (!row && out(f) !== null && out(f) !== false) data[f.key] = out(f);                                        // add: every filled field
+    if (row && (f.type === 'checkbox' ? !!row.data[f.key] : val(row, f)) !== values[f.key]) data[f.key] = out(f);   // edit: only changes
+  }
+  closeDrawer();
+  if (!row) addRow(data);
+  else if (Object.keys(data).length) updateRow(row.id, data, `Saved “${titleOf(row)}”.`);
+}
+
+/* Row menu: Edit, Move to <status>, Delete */
+function openMenu(btn, id) {
+  const row = findRow(id), pop = $('#pop');
+  if (!row || row.pending) return;
+  closeMenu();
+  const cur = val(row, S.R.status), opts = statusOptions();
+  pop.innerHTML = `<button class="mi" role="menuitem" data-act="m-edit">${ic('edit')}Edit<kbd>Enter</kbd></button>` +
+    (opts.length ? '<div class="mh ov">Move to</div>' + opts.map((o) => (o === cur
+      ? `<button class="mi" role="menuitemradio" aria-checked="true" aria-disabled="true" tabindex="-1"><span class="ck">${ic('check', 'xs')}</span>${dot(S.R.status, o)}${esc(o)}</button>`
+      : `<button class="mi" role="menuitemradio" aria-checked="false" data-act="m-move" data-v="${esc(o)}"><span class="ck"></span>${dot(S.R.status, o)}${esc(o)}</button>`)).join('') : '') +
+    `<hr><button class="mi danger" role="menuitem" data-act="m-del">${ic('trash')}Delete…<kbd>Del</kbd></button>`;
+  pop.setAttribute('aria-label', `Actions for ${titleOf(row)}`);
+  pop.hidden = false;
+  const r = btn.getBoundingClientRect(), p = pop.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(r.right - p.width, innerWidth - p.width - 8)) + 'px';
+  pop.style.top = (r.bottom + 4 + p.height > innerHeight - 8 ? Math.max(8, r.top - p.height - 4) : r.bottom + 4) + 'px';
+  btn.setAttribute('aria-expanded', 'true');
+  S.menu = {id: String(row.id), key: keyOf(btn)};
+  pop.querySelector('.mi').focus();
+}
+function closeMenu(refocus) {
+  const m = S.menu;
+  S.menu = null;
+  $('#pop').hidden = true;
+  document.querySelectorAll('.kebab[aria-expanded=true]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+  if (m && refocus) focusKey(m.key);
+}
+document.addEventListener('mousedown', (e) => { if (S.menu && !e.target.closest('#pop, .kebab')) closeMenu(); });
+document.addEventListener('scroll', (e) => { if (S.menu && e.target !== $('#pop')) closeMenu(); }, true);
+addEventListener('resize', () => closeMenu());
+
+/* Keyboard: menu arrows; drawer Esc, Ctrl+Enter and focus trap; Enter, Shift+arrows and Delete on cards */
+document.addEventListener('keydown', (e) => {
+  const t = e.target, k = e.key;
+  if (S.menu && t.closest('#pop')) {
+    const items = [...document.querySelectorAll('#pop [data-act]')];
+    if (k === 'ArrowDown' || k === 'ArrowUp') { e.preventDefault(); items[(items.indexOf(t) + (k === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus(); }
+    if (k === 'Escape' || k === 'Tab') { e.preventDefault(); closeMenu(true); }
+    return;
+  }
+  if (S.drawer) {
+    if (k === 'Escape') { e.preventDefault(); if (S.drawer.confirm) { S.drawer.confirm = false; renderDrawerFooter(); } else closeDrawer(); }
+    if (k === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveDrawer(); }
+    if (k === 'Tab') {
+      const f = [...document.querySelectorAll('.drawer button, .drawer .input, .drawer [type=checkbox]')], first = f[0], last = f[f.length - 1];
+      if (t === (e.shiftKey ? first : last)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    }
+    return;
+  }
+  if (k === 'Escape' && S.confirmId) return cancelDelete();
+  if (!t.matches('.card, tr[data-id]')) return;
+  const id = t.dataset.id;
+  if (k === 'Enter' || k === ' ') { e.preventDefault(); openDrawer('edit', {id}); }
+  else if (e.shiftKey && (k === 'ArrowRight' || k === 'ArrowLeft') && t.matches('.card')) { e.preventDefault(); moveBy(id, k === 'ArrowRight' ? 1 : -1); }
+  else if ((k === 'Delete' || k === 'Backspace') && !findRow(id).pending) { e.preventDefault(); askDelete(id); }
+});
+
+/* Drag a card to another column: HTML5 drag and drop, then one rows.update */
+let drag = null;
+document.addEventListener('dragstart', (e) => {
+  const card = e.target.closest && e.target.closest('.card[draggable=true]');
+  if (!card) return;
+  drag = {id: card.dataset.id, from: card.dataset.status};
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', titleOf(findRow(drag.id)));
+  closeMenu();
+  requestAnimationFrame(() => { card.classList.add('dragging'); document.documentElement.classList.add('is-dragging'); });
+});
+function onDragOver(e) {
+  const col = drag && e.target.closest && e.target.closest('.col[data-status]');
+  document.querySelectorAll('.col.over').forEach((c) => c !== col && c.classList.remove('over'));
+  if (!col) return;
+  e.preventDefault();                               // "this column accepts the drop"
+  e.dataTransfer.dropEffect = 'move';
+  col.classList.toggle('over', col.dataset.status !== drag.from);
+}
+document.addEventListener('dragenter', onDragOver);
+document.addEventListener('dragover', onDragOver);
+document.addEventListener('drop', (e) => {
+  const col = drag && e.target.closest && e.target.closest('.col[data-status]'), d = drag;
+  if (!col) return;
+  e.preventDefault();
+  endDrag();
+  if (col.dataset.status !== d.from) moveRow(d.id, col.dataset.status);
+});
+document.addEventListener('dragend', endDrag);
+function endDrag() {
+  drag = null;
+  document.documentElement.classList.remove('is-dragging');
+  document.querySelectorAll('.over, .dragging').forEach((el) => el.classList.remove('over', 'dragging'));
+}
+
+/* Header actions: ui/message and ui/request-display-mode */
+async function summarize() {
+  S.busy = true; renderHeader();
+  try {
+    const res = await bridge.request('ui/message', {role: 'user', content: {type: 'text', text: briefText()}});
+    if (res && res.isError) throw new Error(resultText(res) || 'Docsie didn’t accept the message.');
+    toast('ok', 'Sent to the chat. Docsie is writing the summary.');
+  } catch (e) {
+    toast('error', `Couldn’t send the summary request. ${e.message}`);
+  }
+  S.busy = false; renderHeader();
+}
+
+async function toggleFullscreen() {
+  const want = S.ctx.displayMode === 'fullscreen' ? 'inline' : 'fullscreen';
+  try {
+    const res = await bridge.request('ui/request-display-mode', {mode: want}, 15000);
+    if (res && res.mode === want) applyContext({displayMode: want});
+    else toast('info', 'Docsie kept the current display mode.');
+  } catch (e) { toast('error', `Couldn’t change the display mode. ${e.message}`); }
+}
+
+// Inline, the app has a fixed height (the board scrolls inside) and reports it.
+function reportSize() {
+  if (!S.inited || S.torn || S.ctx.displayMode === 'fullscreen') return;
+  const width = document.documentElement.scrollWidth, height = Math.ceil($('#app').getBoundingClientRect().height);
+  if (`${width}x${height}` === lastSize) return;
+  lastSize = `${width}x${height}`;
+  bridge.notify('ui/notifications/size-changed', {width, height});
+}
+new ResizeObserver(() => requestAnimationFrame(reportSize)).observe(document.body);
+
+init();
+})();
+</script>
+</body>
+</html>

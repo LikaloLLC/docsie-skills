@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "name": "Feedback Tracker",
+  "description": "Collect, triage and summarize customer feedback right in the chat.",
+  "components": [
+    {
+      "name": "board",
+      "title": "Feedback board",
+      "entry": "ui/board.html",
+      "description": "Open the feedback board: every feedback item with its sentiment and status, a quick-add form and a summary. Use when the user wants to see, add, triage or review feedback.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string", "enum": ["New", "Planned", "In progress", "Done", "Won't do"], "description": "Show only this status"},
+          "highlight": {"type": "string", "description": "Row id to highlight, e.g. one just added"}
+        }
+      },
+      "prefers_border": false
+    }
+  ],
+  "tables": [
+    {
+      "key": "feedback",
+      "name": "Customer feedback",
+      "fields": [
+        {"key": "title", "label": "Title", "type": "text", "required": true},
+        {"key": "details", "label": "Details", "type": "text"},
+        {"key": "customer", "label": "Customer", "type": "text"},
+        {"key": "sentiment", "label": "Sentiment", "type": "select", "config": {"options": ["Positive", "Neutral", "Negative"]}},
+        {"key": "status", "label": "Status", "type": "select", "config": {"options": ["New", "Planned", "In progress", "Done", "Won't do"]}},
+        {"key": "area", "label": "Product area", "type": "text"},
+        {"key": "received", "label": "Received", "type": "date"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2481 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-mode="inline">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Explorer</title>
+<style>
+:root{--paper:#F7F3EC;--paper-2:#F1EBE1;--surface:#FFFFFF;--sunk:#EEE7DC;--line:#E6DED1;--line-2:#D8CDBC;--ink:#1D1915;--ink-2:#4B443C;--muted:#736859;--faint:#B4A999;--ember:#E4532C;--ember-hover:#D94A24;--ember-ink:#B23D1B;--ember-wash:#FCEAE2;--ember-line:#F3C3B1;--live:#2F7A57;--danger:#B42318;--danger-wash:#FDECEA;--danger-line:#F5CFCB;--draft:#8A6110;--draft-wash:#F8EED6;--focus:rgba(228,83,44,.38);--grid:#EEE7DC;--baseline:#CDBFAA;--band:rgba(214,203,186,.30);--row-hover:#FFFBF5;--tip-bg:#1D1915;--tip-ink:#FFFFFF;--tip-muted:#CDBFAE;--hover:rgba(255,255,255,.7);--shadow-1:0 1px 0 rgba(40,25,10,.03),0 10px 30px -18px rgba(60,35,15,.35);--shadow-2:0 1px 0 rgba(40,25,10,.04),0 16px 40px -18px rgba(50,30,10,.45);--f-display:Fraunces,Georgia,'Times New Roman',serif;--f-ui:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--f-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color-scheme:light}
+[data-theme=dark]{--paper:#171310;--paper-2:#1D1915;--surface:#24201B;--sunk:#2F2923;--line:#37302A;--line-2:#4A4137;--ink:#F3EDE4;--ink-2:#D3C9BC;--muted:#A89B8B;--faint:#6F655A;--ember:#E4532C;--ember-hover:#EE6540;--ember-ink:#F49A79;--ember-wash:#3A2219;--ember-line:#6A3524;--live:#6FC39A;--danger:#F08A80;--danger-wash:#3A1D1A;--danger-line:#6A2E28;--draft:#E0B357;--draft-wash:#382C14;--focus:rgba(240,113,74,.55);--grid:#332C26;--baseline:#5A4F44;--band:rgba(255,240,220,.06);--row-hover:#2A251F;--tip-bg:#F3EDE4;--tip-ink:#1D1915;--tip-muted:#5E554B;--hover:rgba(255,255,255,.05);--shadow-1:0 1px 0 rgba(0,0,0,.2),0 10px 30px -18px rgba(0,0,0,.7);--shadow-2:0 1px 0 rgba(0,0,0,.25),0 16px 40px -18px rgba(0,0,0,.85);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper)}
+body{font:400 13px/1.45 var(--f-ui);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus{outline:none}
+:focus-visible{outline:none;box-shadow:0 0 0 3px var(--focus)!important}
+.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.i.sm{width:15px;height:15px}.i.xs{width:12px;height:12px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--f-mono);font-size:11px;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.ov{font:600 10.5px/1.3 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#app{height:var(--app-h,700px);display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--paper)}
+[data-mode=fullscreen] #app{height:100vh}
+/* header */
+.hdr{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px 10px 16px;border-bottom:1px solid var(--line);min-height:58px}
+.hdr-t{flex:1;min-width:0}
+.hdr-t h1{margin:0;font:600 16.5px/1.25 var(--f-display);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-m{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-m .dot{width:3px;height:3px;border-radius:50%;background:var(--faint);flex:none}
+.flag{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border-radius:5px;background:var(--draft-wash);color:var(--draft);font-size:11px;font-weight:600}
+.hdr-a{display:flex;align-items:center;gap:6px;flex:none}
+.btn{height:32px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);font-weight:600;font-size:12.5px;white-space:nowrap;color:var(--ink);box-shadow:0 1px 0 rgba(40,25,10,.04);transition:border-color .12s,background .12s}
+.btn:hover{border-color:var(--faint)}
+.btn.primary{background:var(--ember);border-color:var(--ember);color:#fff;box-shadow:0 1px 0 var(--ember-ink),0 6px 14px -8px rgba(228,83,44,.8)}
+.btn.primary:hover{background:var(--ember-hover)}
+.btn.ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--sunk)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.sm{height:28px;padding:0 9px;font-size:12px;gap:5px}
+.btn.icon{width:32px;padding:0}
+.btn.sm.icon{width:28px;padding:0}
+.btn.on{border-color:var(--ember-line);color:var(--ember-ink);background:var(--ember-wash)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn .spin{width:12px;height:12px}
+/* layout */
+.body{flex:1;min-height:0;display:grid;grid-template-columns:176px minmax(0,1fr);position:relative}
+[data-mode=fullscreen] .body{grid-template-columns:232px minmax(0,1fr)}
+.body.fc{grid-template-columns:minmax(0,1fr)}
+.body.fc .fields{display:none}
+.fields{background:var(--paper-2);border-right:1px solid var(--line);overflow:auto;min-height:0;padding:10px 6px 14px 10px}
+.main{display:flex;flex-direction:column;min-height:0;min-width:0;padding:10px 12px 12px;gap:8px}
+/* fields panel */
+.fp-h{display:flex;align-items:center;gap:6px;padding:0 0 6px 4px}
+.fp-h .n{font:500 10.5px var(--f-mono);color:var(--muted)}
+.fp-h .btn{margin-left:auto}
+.fp-s{position:relative;margin:2px 0 4px}
+.fp-s .i{position:absolute;left:8px;top:7px;color:var(--muted)}
+.fp-s input{padding-left:28px}
+.fp-g{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px}
+.fld{display:flex;align-items:center;border-radius:7px;position:relative}
+.fld:hover{background:var(--hover)}
+.fld-b{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:28px;padding:0 4px 0 4px;border-radius:7px;font-size:12.5px;color:var(--ink-2);cursor:grab;user-select:none}
+.fld-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fld.used .fld-t{color:var(--ink);font-weight:600}
+.fld.used::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ember)}
+.fld-m{width:24px;height:24px;flex:none;border:0;background:transparent;border-radius:6px;color:var(--muted);display:grid;place-items:center;opacity:0}
+.fld:hover .fld-m,.fld-m:focus-visible,.fld-m[aria-expanded=true]{opacity:1}
+.fld-m:hover{background:var(--sunk);color:var(--ink)}
+.fp-e{padding:8px 6px;color:var(--muted);font-size:12px}
+.fp-hint{margin:12px 4px 0;padding:8px 9px;border-radius:8px;border:1px dashed var(--line-2);color:var(--muted);font-size:11.5px;line-height:1.4}
+.fields.drop-rm{background:var(--danger-wash)}
+.gl{width:22px;height:16px;flex:none;display:inline-grid;place-items:center;border-radius:4px;font:600 9px/1 var(--f-mono);color:var(--ink-2);background:var(--sunk);letter-spacing:-.03em}
+.gl .i{width:11px;height:11px;stroke-width:2}
+.gl-number{background:transparent;box-shadow:inset 0 0 0 1px var(--line-2)}
+/* shelves */
+.shelves{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;flex:none}
+.shelf{display:flex;align-items:flex-start;min-height:36px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px 3px 3px 0;min-width:0}
+.sh-l{flex:none;width:76px;display:flex;align-items:center;height:28px;padding:0 6px 0 11px;color:var(--muted);font:600 10px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;border-right:1px solid var(--line);margin-right:4px}
+.sh-z{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px;min-height:28px;align-items:center;border-radius:7px;padding:0 2px;position:relative}
+.sh-ph{font-size:12px;color:var(--muted);padding:0 6px;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.is-dragging .sh-z{background:var(--paper);box-shadow:inset 0 0 0 1px var(--line-2)}
+.sh-z.over{background:var(--ember-wash)!important;box-shadow:inset 0 0 0 1.5px var(--ember)!important}
+.sh-z.ins-end::after{content:"";width:2px;height:22px;border-radius:2px;background:var(--ember)}
+.pill{display:inline-flex;align-items:stretch;height:26px;max-width:100%;min-width:0;border-radius:7px;background:var(--paper);border:1px solid var(--line-2);color:var(--ink);font-size:12px;font-weight:600;position:relative;cursor:grab;user-select:none}
+.pill.pv{background:var(--ember-wash);border-color:var(--ember-line);color:var(--ember-ink)}
+.pill.pv .gl{background:transparent;box-shadow:inset 0 0 0 1px var(--ember-line);color:var(--ember-ink)}
+.pill.pf .pl-b{padding-left:9px}
+.pill.pf.on{border-color:var(--ink-2)}
+.pill.drag-src{opacity:.35}
+.pill.ins-before::before{content:"";position:absolute;left:-4px;top:1px;bottom:1px;width:2px;border-radius:2px;background:var(--ember)}
+.pl-b{display:inline-flex;align-items:center;gap:6px;min-width:0;padding:0 2px 0 4px;border-radius:6px 0 0 6px;cursor:inherit}
+.pl-b:hover{background:rgba(0,0,0,.035)}
+.pl-b .i.xs{opacity:.6;width:10px;height:10px}
+.pl-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.pl-g{font:500 10px/1 var(--f-mono);padding:3px 5px;border-radius:4px;background:var(--sunk);color:var(--ink-2);white-space:nowrap;text-transform:uppercase;letter-spacing:.02em}
+.pill.pv .pl-g{background:rgba(255,255,255,.55);color:var(--ember-ink)}
+[data-theme=dark] .pill.pv .pl-g{background:rgba(0,0,0,.25)}
+.pl-x{width:22px;flex:none;border:0;background:transparent;color:inherit;opacity:.55;display:grid;place-items:center;border-radius:0 6px 6px 0}
+.pl-x:hover{opacity:1;background:rgba(0,0,0,.06)}
+/* toolbar */
+.toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:none}
+.toolbar .sp{flex:1}
+.seg{display:inline-flex;padding:2px;border-radius:9px;background:var(--sunk);gap:2px}
+.seg button{border:0;background:transparent;height:26px;padding:0 7px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-weight:500;font-size:12px;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(40,25,10,.14);font-weight:600}
+.seg button.on .i{color:var(--ember)}
+.seg.small button{height:24px;font-size:11.5px;padding:0 7px}
+/* kpis */
+.kpis{display:flex;gap:8px;overflow-x:auto;flex:none;scrollbar-width:none}
+.kpis::-webkit-scrollbar{display:none}
+.kpi{flex:1 1 0;min-width:118px;max-width:260px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px 7px}
+.kpi-l{font:600 10px/1.3 var(--f-ui);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-v{font:600 18px/1.25 var(--f-ui);letter-spacing:-.01em;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-v small{font:500 11px var(--f-mono);color:var(--muted);letter-spacing:0;margin-left:4px}
+.kpi.rows{flex:0 1 auto;min-width:104px;background:transparent}
+.kpi.more{flex:0 0 auto;min-width:0;display:grid;place-items:center;color:var(--muted);font-size:12px}
+/* viz */
+.viz{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-1);overflow:hidden;position:relative}
+.vz-h{display:flex;align-items:center;gap:6px 14px;padding:10px 14px 4px;flex-wrap:wrap;flex:none}
+.vz-t{font:600 14px/1.3 var(--f-display);letter-spacing:-.005em;min-width:0;flex:1 1 220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:11.5px;color:var(--ink-2);max-height:40px;overflow:auto}
+.lg{display:inline-flex;align-items:center;gap:6px;max-width:170px;white-space:nowrap}
+.lg span{overflow:hidden;text-overflow:ellipsis}
+.lg i{width:10px;height:10px;border-radius:2px;flex:none}
+.lg i.ln{height:2.5px;width:14px;border-radius:2px}
+.heat-lg{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.heat-lg b{display:inline-block;width:96px;height:8px;border-radius:4px}
+.vz-n{padding:0 14px 4px;font-size:11.5px;color:var(--muted);display:flex;gap:2px 14px;flex-wrap:wrap;flex:none}
+.vz-n span{display:inline-flex;align-items:center;gap:5px}
+.vz-b{flex:1;min-height:0;overflow:auto;position:relative}
+.vz-b.more-r{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent)}
+.vz-b.ch{overflow-x:hidden;padding:0 12px 6px 14px}
+.vz-b:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)!important}
+.vz-e{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:20px}
+.vz-e h3{margin:6px 0 0;font:600 16px/1.3 var(--f-display)}
+.vz-e p{margin:0 0 6px;color:var(--muted);font-size:12.5px;max-width:340px}
+.lnk{border:0;background:transparent;color:var(--ember-ink);font-weight:600;font-size:11.5px;padding:1px 4px;border-radius:5px}
+.lnk:hover{background:var(--ember-wash)}
+/* chart */
+svg.chart{display:block}
+svg.chart text{font-family:var(--f-ui);font-size:11px;fill:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+svg.chart text.cl{fill:var(--ink-2)}
+svg.chart text.vl{fill:var(--ink-2);font-weight:600;font-size:10.5px}
+svg.chart text.at{font-weight:600;fill:var(--muted)}
+svg.chart .gr{stroke:var(--grid);stroke-width:1;shape-rendering:crispEdges}
+svg.chart .bl{stroke:var(--baseline);stroke-width:1;shape-rendering:crispEdges}
+svg.chart .hl{fill:var(--band)}
+svg.chart .xh{stroke:var(--baseline);stroke-width:1}
+svg.chart .ring{stroke:var(--surface);stroke-width:2}
+svg.chart .bar{transition:opacity .12s}
+svg.chart .sa{stroke:var(--surface);stroke-width:1.5}
+svg.chart .dn,svg.chart .dot{stroke:var(--surface);stroke-width:2}
+svg.chart .dot{stroke-width:1.5}
+svg.chart text.dt{font:600 22px var(--f-ui);fill:var(--ink);letter-spacing:-.01em}
+svg.chart text.pc{font:500 11px var(--f-mono);fill:var(--ink-2)}
+.lg i.dt{border-radius:50%;width:9px;height:9px}
+.seg button .lbl{display:none}
+.seg .mo{padding:0 5px 0 7px}
+@media (min-width:900px){.seg button.on .lbl{display:inline}}
+@media (max-width:1279px){.seg .x2{display:none}}
+@media (min-width:1280px){.seg .mo{display:none}}
+svg.chart.dim .bar{opacity:.55}
+svg.chart.dim .bar.hot{opacity:1}
+/* table */
+table.pv{border-collapse:separate;border-spacing:0;font-size:12px;min-width:100%}
+.pv th,.pv td{padding:0 9px;height:28px;white-space:nowrap;border-bottom:1px solid var(--line);text-align:left;background:var(--surface)}
+.pv thead th{position:sticky;top:0;z-index:2;height:30px;font:600 10.5px/1.2 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line-2);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.pv thead th.mh,.pv thead th.vh{text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink);text-align:right;font-weight:600}
+.pv thead th.vh{font-size:11.5px;color:var(--ink-2);font-weight:500}
+.pv thead th.ch{text-align:right;color:var(--muted)}
+.pv td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.pv td.nil{color:var(--faint)}
+.pv th.rl{font-weight:500;color:var(--ink);max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.pv .s0{position:sticky;left:0;z-index:1}
+.pv thead .s0{z-index:3}
+.pv .tc{box-shadow:inset 1px 0 0 var(--line-2);font-weight:600}
+.pv:not(.heat) tbody tr:hover td,.pv:not(.heat) tbody tr:hover th{background:var(--row-hover)}
+.pv tr.sub th,.pv tr.sub td{background:var(--paper);font-weight:600}
+.pv tr.gt th,.pv tr.gt td{position:sticky;bottom:0;background:var(--paper-2);font-weight:700;border-top:1px solid var(--line-2);border-bottom:0;z-index:1}
+.pv tr.gt .s0{z-index:2}
+.pv.heat td.hc{border-bottom-color:var(--surface);box-shadow:inset -1px 0 0 var(--surface)}
+/* popovers */
+.pop{position:fixed;z-index:70;max-height:calc(100vh - 16px);overflow:auto;border-radius:12px;box-shadow:var(--shadow-2)}
+.menu{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:5px;min-width:208px}
+.mi{display:flex;align-items:center;gap:8px;width:100%;height:30px;padding:0 9px 0 6px;border:0;border-radius:7px;background:transparent;font-size:12.5px;color:var(--ink);text-align:left}
+.mi:hover,.mi:focus-visible{background:var(--sunk)}
+.mi:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)!important}
+.mi .ck{width:14px;display:grid;place-items:center;color:var(--ember);flex:none}
+.mi kbd{margin-left:auto;font:500 10px var(--f-mono);color:var(--muted);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+.mi.danger{color:var(--danger)}
+.mi[disabled]{opacity:.4;pointer-events:none}
+.mh{font:600 10px var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:7px 9px 3px 28px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.input{height:30px;width:100%;padding:0 10px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);font-size:12.5px;color:var(--ink)}
+.input::placeholder{color:var(--muted)}
+.input:focus{border-color:var(--ember);box-shadow:0 0 0 3px var(--focus)}
+.fe{background:var(--surface);border:1px solid var(--line);border-radius:12px;width:284px;display:flex;flex-direction:column}
+.fe-h{padding:12px 14px 8px;display:flex;align-items:baseline;gap:8px}
+.fe-h b{font:600 14.5px/1.2 var(--f-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fe-h span{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.fe-g{padding:0 12px 8px}
+.fe-s{padding:0 12px 6px}
+.fe-a{display:flex;align-items:center;gap:2px;padding:0 8px 6px}
+.fe-a .n{margin-left:auto;font:500 10.5px var(--f-mono);color:var(--muted);padding-right:4px}
+.fe-l{overflow:auto;padding:4px 6px 6px;border-top:1px solid var(--line);max-height:236px;min-height:48px}
+.ckr{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;font-size:12.5px;cursor:pointer;min-width:0}
+.ckr:hover{background:var(--sunk)}
+.ckr input{accent-color:var(--ink);width:15px;height:15px;margin:0;flex:none}
+.ckr .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ckr .c{margin-left:auto;font:500 10.5px var(--f-mono);color:var(--muted);padding-left:8px}
+.fe-more{padding:6px 8px;font-size:11.5px;color:var(--muted)}
+.fe-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px 12px 12px}
+.fe-r label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.fe-f{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 8px;border-top:1px solid var(--line);background:var(--paper);border-radius:0 0 12px 12px}
+.fe-f .sp{flex:1}
+.lnk.danger{color:var(--danger)}
+.lnk.danger:hover{background:var(--danger-wash)}
+/* tooltip */
+.tt{position:fixed;z-index:80;pointer-events:none;background:var(--tip-bg);color:var(--tip-ink);border-radius:8px;padding:7px 10px 8px;font-size:12px;box-shadow:var(--shadow-2);max-width:300px;min-width:130px;left:0;top:0}
+.tt[hidden]{display:none}
+.tt-h{font-size:11px;color:var(--tip-muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-r{display:flex;align-items:center;gap:8px;line-height:1.6;white-space:nowrap}
+.tt-r i{width:12px;height:3px;border-radius:2px;flex:none}
+.tt-r b{font-weight:600;font-variant-numeric:tabular-nums}
+.tt-r span{color:var(--tip-muted);overflow:hidden;text-overflow:ellipsis}
+.tt-r.hot span{color:var(--tip-ink)}
+.tt-r.tot{border-top:1px solid rgba(128,128,128,.35);margin-top:3px;padding-top:2px}
+/* toasts */
+.toasts{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:60;pointer-events:none;width:max-content;max-width:calc(100% - 24px)}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--tip-bg);color:var(--tip-ink);padding:8px 8px 8px 12px;border-radius:11px;box-shadow:var(--shadow-2);font-size:12.5px;max-width:100%}
+.toast .tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toast.ok .i{color:#7FD1A8}
+[data-theme=dark] .toast.ok .i{color:var(--live)}
+.toast.error{background:var(--danger-wash);color:var(--danger);border:1px solid var(--danger-line)}
+.toast.error .tx{white-space:normal}
+.toast .tb{border:0;background:transparent;color:#FFB394;font-weight:600;font-size:12px;padding:4px 6px;border-radius:6px}
+[data-theme=dark] .toast .tb{color:var(--ember-ink)}
+.toast.error .tb{color:var(--danger);text-decoration:underline}
+.toast .tx-x{border:0;background:transparent;color:inherit;opacity:.6;width:24px;height:24px;display:grid;place-items:center;border-radius:6px;flex:none}
+.toast .tx-x:hover{opacity:1}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .8s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* states */
+.state{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.state[hidden],.body[hidden]{display:none}
+.state-c{max-width:400px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.state-c h2{margin:4px 0 0;font:600 18px/1.3 var(--f-display);letter-spacing:-.01em}
+.state-c p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.5}
+.state-ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--sunk);color:var(--ink-2)}
+.state-ic .i{width:22px;height:22px}
+.state-ic.err{background:var(--danger-wash);color:var(--danger)}
+.state-c pre{margin:4px 0 0;font:11px/1.45 var(--f-mono);background:var(--paper-2);border:1px solid var(--line);padding:8px 10px;border-radius:8px;max-width:100%;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);text-align:left;max-height:120px;overflow:auto}
+.state-c .btn{margin-top:6px}
+.pick{width:100%;max-height:280px;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px;text-align:left}
+.pick-i{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.pick-i:hover{border-color:var(--faint);background:var(--hover)}
+.pick-i .i{grid-row:span 2;color:var(--ink-2)}
+.pick-t{font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-m{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-h{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:6px 2px 0}
+.skel{display:flex;gap:6px;align-items:flex-end;height:34px;margin-bottom:4px}
+.skel i{width:9px;border-radius:3px 3px 0 0;background:var(--line-2);animation:pulse 1.2s ease-in-out infinite}
+.skel i:nth-child(2){animation-delay:.15s}.skel i:nth-child(3){animation-delay:.3s}.skel i:nth-child(4){animation-delay:.45s}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.spin,.skel i{animation-duration:3s}}
+@media (max-width:900px){.toolbar .lbl,.hdr .lbl-x{display:none}}
+@media (min-width:1280px){.shelves{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:620px){.body{grid-template-columns:minmax(0,1fr)}.body:not(.fc) .fields{position:absolute;z-index:40;left:0;top:0;bottom:0;width:236px;box-shadow:var(--shadow-2)}.shelves{grid-template-columns:minmax(0,1fr)}.hdr .lbl-r{display:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+<symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></symbol>
+<symbol id="i-heat" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3" fill="currentColor"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3" fill="currentColor" fill-opacity=".4"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></symbol>
+<symbol id="i-bar" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+<symbol id="i-stack" viewBox="0 0 24 24"><rect x="3.5" y="9" width="4.5" height="11" rx="1"/><rect x="9.75" y="4" width="4.5" height="16" rx="1"/><rect x="16" y="12" width="4.5" height="8" rx="1"/><path d="M3.5 14h4.5M9.75 11h4.5M16 16h4.5"/></symbol>
+<symbol id="i-line" viewBox="0 0 24 24"><path d="M3 16.5 8 11l4 3.5L17 8l4 3"/><path d="M3 21h18"/></symbol>
+<symbol id="i-area" viewBox="0 0 24 24"><path d="M3 17l5-6 4 3.5L17 8l4 3v9H3z" fill="currentColor" fill-opacity=".22"/><path d="M3 17l5-6 4 3.5L17 8l4 3"/></symbol>
+<symbol id="i-sarea" viewBox="0 0 24 24"><path d="M3 13l6-4 5 3 7-5v13H3z" fill="currentColor" fill-opacity=".18"/><path d="M3 13l6-4 5 3 7-5M3 17l6-2 5 1.5 7-3"/></symbol>
+<symbol id="i-donut" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3.5V8.5M19.6 15.8l-4.4-2"/></symbol>
+<symbol id="i-scatter" viewBox="0 0 24 24"><path d="M3 3v18h18"/><circle cx="8" cy="15" r="1.6"/><circle cx="12" cy="10" r="1.6"/><circle cx="16.5" cy="13" r="1.6"/><circle cx="18" cy="6.5" r="1.6"/></symbol>
+<symbol id="i-combo" viewBox="0 0 24 24"><path d="M5 20v-6M10 20v-9M15 20v-5M20 20v-8M3 20h18"/><path d="M4 9.5 9 5l5 3 6-4"/></symbol>
+<symbol id="i-tree" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M12 11h9M3 14h9"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></symbol>
+<symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M12 8.5 13.2 11l2.5 1-2.5 1L12 15.5 10.8 13l-2.5-1 2.5-1z"/></symbol>
+<symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="i-collapse" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7.5V19l-4 1.5v-8z"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
+<symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 5H6l6 7-6 7h12"/></symbol>
+<symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+</svg>
+<div id="app">
+  <header class="hdr" id="hdr"></header>
+  <div class="state" id="state"></div>
+  <div class="body" id="body" hidden>
+    <aside class="fields" id="fields" aria-label="Fields"></aside>
+    <main class="main" id="main">
+      <section class="shelves" id="shelves" aria-label="Shelves"></section>
+      <div class="toolbar" id="toolbar" role="toolbar" aria-label="View options"></div>
+      <div class="kpis" id="kpis" aria-label="Summary"></div>
+      <section class="viz" id="viz" aria-label="Visualization"></section>
+    </main>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div class="sr" id="sr" aria-live="polite"></div>
+</div>
+<div class="tt" id="tip" role="tooltip" hidden></div>
+<script>
+(() => {
+'use strict';
+/* ================= constants ================= */
+var PROTOCOL = '2026-01-26';
+var SEP = '\u001f', SEP2 = '\u001e', BLANK = '\u2205';
+var AGGS = [['sum','Sum'],['avg','Average'],['count','Count'],['count_distinct','Count distinct'],['min','Min'],['max','Max'],['median','Median']];
+var AGG_NAME = {}; AGGS.forEach((a) => { AGG_NAME[a[0]] = a[1]; });
+var AGG_TAG = {sum:'sum',avg:'avg',count:'count',count_distinct:'distinct',min:'min',max:'max',median:'median'};
+var AGG_WORD = {sum:'sum',avg:'average',count:'count',count_distinct:'distinct count',min:'min',max:'max',median:'median'};
+var DIM_AGGS = ['count','count_distinct'];
+var GRAINS = [['year','Year'],['quarter','Quarter'],['month','Month'],['week','Week'],['day','Day']];
+var GRAIN_OK = {year:1,quarter:1,month:1,week:1,day:1};
+var CHARTS = [['table','Table','table'],['heatmap','Heatmap','heat'],['bar','Bar','bar'],['stacked_bar','Stacked','stack'],['line','Line','line'],['area','Area','area'],['stacked_area','Stacked area','sarea'],['donut','Donut','donut'],['scatter','Scatter','scatter'],['combo','Combo','combo'],['treemap','Treemap','tree']];
+var CHART_OK = {table:1,heatmap:1,bar:1,stacked_bar:1,line:1,area:1,stacked_area:1,donut:1,scatter:1,combo:1,treemap:1};
+var SHELVES = [['rows','Rows'],['columns','Columns'],['values','Values'],['filters','Filters']];
+var SHELF_NAME = {rows:'Rows',columns:'Columns',values:'Values',filters:'Filters'};
+var PALETTE = {
+	light: ['#2F5FA8','#E4532C','#2A9D8F','#C23B3B','#C28A12','#B5547F','#6A4BA8','#4E8A3E'],
+	dark:  ['#5486D2','#E7562F','#33A395','#C94140','#C18911','#D26E99','#7A5CBB','#5B984C']
+};
+var HEAT = {
+	light: ['#F7F3EC','#DCE6F4','#B7CBE8','#8DADDA','#5F89C6','#2F5FA8'],
+	dark:  ['#2B2621','#283447','#2C4467','#33578A','#4170B0','#5F8FD6']
+};
+var MAX_COLS = 100, MAX_TABLE_ROWS = 1000, MAX_EXPORT_ROWS = 10000, MAX_CATS = 50, MAX_SERIES = 8, HEAD_H = 30;
+var CURRENCY_RE = /revenue|price|cost|usd|amount/i;
+var FONT_UI = "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+/* ================= state ================= */
+var S = {
+	status: 'connecting', msg: '', detail: '',
+	ctx: {theme: 'light', displayMode: 'inline', availableDisplayModes: []},
+	toolArgs: null, dataset: null, suggested: null, source: null, hint: null, picker: null, pickedNow: false,
+	fields: [], byName: new Map(), data: [], totalRows: 0, truncated: false,
+	view: null, initialView: null, res: null, resSig: '', lastFirst: undefined,
+	distinct: new Map(), extents: new Map(), grains: new Map(),
+	ui: {fieldsHidden: null, search: '', feGrain: {}},
+	busy: {}, chart: null, geo: null, chartSig: '', active: -1, torn: false
+};
+
+/* ================= small utils ================= */
+function $(s, r) { return (r || document).querySelector(s); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function uniq(a) { var s = new Set(), o = []; a.forEach((x) => { if (!s.has(x)) { s.add(x); o.push(x); } }); return o; }
+function pick(a, k) { return a ? (a[k] == null ? null : a[k]) : null; }
+function icon(id, cls) { return '<svg class="i ' + (cls || '') + '" aria-hidden="true"><use href="#i-' + id + '"/></svg>'; }
+function own(o, k) { return typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k); }
+function toNum(v) { if (v == null || v === '') return null; var n = +v; return isFinite(n) ? n : null; }
+function textOf(r) { return r && Array.isArray(r.content) ? r.content.filter((c) => c && c.type === 'text').map((c) => c.text).join('\n').trim() : ''; }
+function parseJSON(s) { try { return JSON.parse(s); } catch (e) { return null; } }
+function theme() { return S.ctx.theme === 'dark' ? 'dark' : 'light'; }
+function pal() { return PALETTE[theme()]; }
+function f1(v) { return Math.round(v * 10) / 10; }
+function cmpDir(a, b, dir) { if (a == null || b == null) return a == null && b == null ? 0 : (a == null ? 1 : -1); return dir * (a - b); }
+var ACR = {id:1,usd:1,eur:1,gbp:1,url:1,api:1,kpi:1,sku:1,ip:1,utm:1,ai:1,pdf:1,csv:1,nps:1,mrr:1,arr:1,sla:1,qa:1,roi:1,ctr:1,cpc:1};
+function humanize(n) {
+	var s = String(n).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_\-.]+/g, ' ').trim();
+	if (!s) return String(n);
+	return s.split(/\s+/).map((w, i) => {
+		if (ACR[w.toLowerCase()]) return w.toUpperCase();
+		return i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+	}).join(' ');
+}
+
+/* text measuring (canvas, no network) */
+var tw = (() => {
+	var c = document.createElement('canvas').getContext('2d'), cache = new Map();
+	return (s, px, wt) => {
+		px = px || 11; wt = wt || 400; s = String(s);
+		var k = px + '|' + wt + '|' + s, w = cache.get(k);
+		if (w === undefined) { c.font = wt + ' ' + px + 'px ' + FONT_UI; w = c.measureText(s).width; if (cache.size > 6000) cache.clear(); cache.set(k, w); }
+		return w;
+	};
+})();
+function fitText(s, maxW, px, wt) {
+	s = String(s); if (tw(s, px, wt) <= maxW) return s;
+	var lo = 0, hi = s.length;
+	while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (tw(s.slice(0, mid) + '\u2026', px, wt) <= maxW) lo = mid; else hi = mid - 1; }
+	return lo > 0 ? s.slice(0, lo).replace(/\s+$/, '') + '\u2026' : '';
+}
+
+/* ================= locale & formatting ================= */
+var LOCALE = 'en-US', NF = new Map(), COLL = new Intl.Collator('en-US', {numeric: true, sensitivity: 'base'}), DF = {};
+function setLocale(l) {
+	try { new Intl.NumberFormat(l); LOCALE = l; } catch (e) { LOCALE = 'en-US'; }
+	NF.clear(); DF = {};
+	try { COLL = new Intl.Collator(LOCALE, {numeric: true, sensitivity: 'base'}); } catch (e) { /* keep */ }
+}
+function nf(o) { var k = JSON.stringify(o), f = NF.get(k); if (!f) { f = new Intl.NumberFormat(LOCALE, o); NF.set(k, f); } return f; }
+function fmtInt(v) { return v == null ? '\u2013' : nf({maximumFractionDigits: 0}).format(v); }
+function decFor(v) { var a = Math.abs(v); if (Number.isInteger(v) || a >= 1000) return 0; if (a >= 100) return 1; return 2; }
+function fmtFull(v, fmt) {
+	if (v == null || !isFinite(v)) return '\u2013';
+	if (fmt === 'integer') return nf({maximumFractionDigits: 0}).format(v);
+	if (fmt === 'percent') return nf({style: 'percent', maximumFractionDigits: 1}).format(v);
+	if (fmt === 'currency') { var d = decFor(v) ? 2 : 0; return (v < 0 ? '-' : '') + '$' + nf({minimumFractionDigits: d, maximumFractionDigits: d}).format(Math.abs(v)); }
+	return nf({maximumFractionDigits: decFor(v)}).format(v);
+}
+function fmtCompact(v, fmt) {
+	if (v == null || !isFinite(v)) return '\u2013';
+	if (fmt === 'percent') return nf({style: 'percent', maximumFractionDigits: 1}).format(v);
+	var a = Math.abs(v), sign = v < 0 ? '-' : '', pre = fmt === 'currency' ? '$' : '';
+	if (a < 1000) return sign + pre + nf({maximumFractionDigits: Number.isInteger(a) ? 0 : (a < 10 ? 2 : 1)}).format(a);
+	var U = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+	for (var i = 0; i < U.length; i++) {
+		if (a >= U[i][0]) {
+			var x = a / U[i][0], s = x >= 100 ? x.toFixed(0) : x.toFixed(1).replace(/\.0$/, '');
+			if (+s >= 1000 && i > 0) { x = a / U[i - 1][0]; s = x.toFixed(1).replace(/\.0$/, ''); return sign + pre + s + U[i - 1][1]; }
+			return sign + pre + s + U[i][1];
+		}
+	}
+	return sign + pre + a;
+}
+function fmtKpi(v, fmt) { return v != null && Math.abs(v) >= 100000 ? fmtCompact(v, fmt) : fmtFull(v, fmt); }
+function fmtPct(x) { return x == null || !isFinite(x) ? '\u2013' : nf({style: 'percent', maximumFractionDigits: 1}).format(x); }
+function signedPct(x) { return (x > 0 ? '+' : '') + fmtPct(x); }
+function dfmt(kind, ms) {
+	if (!DF[kind]) {
+		var o = kind === 'm' ? {month: 'short', year: 'numeric', timeZone: 'UTC'} : {month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'};
+		try { DF[kind] = new Intl.DateTimeFormat(LOCALE, o); } catch (e) { DF[kind] = new Intl.DateTimeFormat('en-US', o); }
+	}
+	return DF[kind].format(ms);
+}
+
+/* ================= dates ================= */
+var DATE_RE = /^(\d{4})-(\d{2})(?:-(\d{2}))?/;
+function isoWeek(y, m, d) {
+	var t = new Date(Date.UTC(y, m - 1, d)), day = t.getUTCDay() || 7;
+	t.setUTCDate(t.getUTCDate() + 4 - day);
+	var ys = Date.UTC(t.getUTCFullYear(), 0, 1), w = Math.ceil(((t - ys) / 864e5 + 1) / 7);
+	return t.getUTCFullYear() + '-W' + (w < 10 ? '0' : '') + w;
+}
+function dateKey(s, g) {
+	var m = DATE_RE.exec(s); if (!m) return s;
+	var y = m[1], mo = m[2], d = m[3] || '01';
+	switch (g) {
+		case 'year': return y;
+		case 'quarter': return y + '-Q' + (((+mo - 1) / 3 | 0) + 1);
+		case 'week': return isoWeek(+y, +mo, +d);
+		case 'day': return y + '-' + mo + '-' + d;
+		default: return y + '-' + mo;
+	}
+}
+function detectGrain(keys) {
+	for (var i = 0; i < keys.length; i++) {
+		var k = keys[i]; if (k == null) continue; k = String(k);
+		if (/^\d{4}$/.test(k)) return 'year';
+		if (/^\d{4}-Q[1-4]$/.test(k)) return 'quarter';
+		if (/^\d{4}-W\d{2}$/.test(k)) return 'week';
+		if (/^\d{4}-\d{2}$/.test(k)) return 'month';
+		return 'day';
+	}
+	return null;
+}
+function dateLabel(k, g) {
+	if (k === BLANK) return '(blank)';
+	var m;
+	if (g === 'month' && (m = /^(\d{4})-(\d{2})$/.exec(k))) return dfmt('m', Date.UTC(+m[1], +m[2] - 1, 1));
+	if (g === 'day' && (m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k))) return dfmt('d', Date.UTC(+m[1], +m[2] - 1, +m[3]));
+	return k;
+}
+function autoGrain(f) {
+	if (S.grains.has(f.name)) return S.grains.get(f.name);
+	var lo = null, hi = null, i = f.i, D = S.data;
+	for (var r = 0; r < D.length; r++) { var v = D[r][i]; if (typeof v === 'string' && v.length >= 7) { var d = v.slice(0, 10); if (lo === null || d < lo) lo = d; if (hi === null || d > hi) hi = d; } }
+	var g = 'month';
+	if (lo) { var days = (Date.parse(hi) - Date.parse(lo)) / 864e5; g = !isFinite(days) ? 'month' : days <= 62 ? 'day' : days <= 1500 ? 'month' : days <= 3700 ? 'quarter' : 'year'; }
+	S.grains.set(f.name, g);
+	return g;
+}
+
+/* ================= JSON-RPC client ================= */
+var nextId = 1, pending = new Map();
+function post(m) { try { window.parent.postMessage(m, '*'); } catch (e) { /* host gone */ } }
+function request(method, params, timeout) {
+	timeout = timeout || 30000;
+	var id = nextId++;
+	return new Promise((resolve, reject) => {
+		var t = setTimeout(() => { pending.delete(id); reject(new Error('No reply from Docsie (' + method + ') after ' + Math.round(timeout / 1000) + ' s.')); }, timeout);
+		pending.set(id, {resolve: resolve, reject: reject, t: t});
+		post({jsonrpc: '2.0', id: id, method: method, params: params || {}});
+	});
+}
+function notify(method, params) { var m = {jsonrpc: '2.0', method: method}; if (params !== undefined) m.params = params; post(m); }
+function respond(id, result) { post({jsonrpc: '2.0', id: id, result: result}); }
+function respondError(id, code, message) { post({jsonrpc: '2.0', id: id, error: {code: code, message: message}}); }
+
+window.addEventListener('message', (e) => {
+	if (e.source !== window.parent) return;
+	var m = e.data;
+	if (!m || typeof m !== 'object' || m.jsonrpc !== '2.0') return;
+	if (typeof m.method === 'string') {
+		if (m.id !== undefined && m.id !== null) onHostRequest(m);
+		else onHostNotification(m.method, m.params || {});
+		return;
+	}
+	if (m.id !== undefined && pending.has(m.id)) {
+		var p = pending.get(m.id); pending.delete(m.id); clearTimeout(p.t);
+		if (m.error) { var err = new Error(m.error.message || 'Request failed'); err.code = m.error.code; p.reject(err); }
+		else p.resolve(m.result);
+	}
+});
+function onHostRequest(m) {
+	switch (m.method) {
+		case 'ui/resource-teardown': flushSave(); respond(m.id, {}); teardown(); break;
+		case 'ping': respond(m.id, {}); break;
+		default: respondError(m.id, -32601, 'Method not found: ' + m.method);
+	}
+}
+function onHostNotification(method, p) {
+	switch (method) {
+		case 'ui/notifications/tool-input':
+			S.toolArgs = p.arguments || {};
+			if (S.status === 'connecting' || S.status === 'waiting') { S.status = 'waiting'; }
+			render(); break;
+		case 'ui/notifications/tool-result': onToolResult(p); break;
+		case 'ui/notifications/host-context-changed': applyContext(p); break;
+		case 'ui/notifications/tool-cancelled':
+			if (S.status !== 'ready') { S.status = 'cancelled'; S.msg = p.reason ? String(p.reason) : ''; render(); }
+			break;
+	}
+}
+function teardown() { S.torn = true; closePop(); hideTip(); pending.forEach((p) => { clearTimeout(p.t); }); pending.clear(); }
+
+/* ================= host context ================= */
+function applyContext(c) {
+	if (!c || typeof c !== 'object') return;
+	Object.keys(c).forEach((k) => { if (k !== 'docsieViewState') S.ctx[k] = c[k]; });
+	if (c.containerDimensions && typeof c.containerDimensions === 'object') S.ctx.containerDimensions = Object.assign({}, c.containerDimensions);
+	var root = document.documentElement;
+	root.setAttribute('data-theme', S.ctx.theme === 'dark' ? 'dark' : 'light');
+	root.setAttribute('data-mode', S.ctx.displayMode === 'fullscreen' ? 'fullscreen' : 'inline');
+	if (c.locale) setLocale(String(c.locale));
+	sizeApp();
+	S.chartSig = '';
+	if (c.displayMode) lastSize = '';
+	render();
+	if (S.inited) requestAnimationFrame(() => { requestAnimationFrame(reportSize); });
+}
+function sizeApp() {
+	var d = S.ctx.containerDimensions || {}, h = 700;
+	if (+d.height > 0) h = Math.min(+d.height, 720);
+	else if (+d.maxHeight > 0) h = Math.min(700, +d.maxHeight);
+	document.documentElement.style.setProperty('--app-h', Math.max(240, Math.round(h)) + 'px');
+}
+function canFullscreen() { var a = S.ctx.availableDisplayModes; return Array.isArray(a) && a.indexOf('fullscreen') >= 0; }
+async function toggleFullscreen() {
+	var want = S.ctx.displayMode === 'fullscreen' ? 'inline' : 'fullscreen';
+	try {
+		var r = await request('ui/request-display-mode', {mode: want}, 15000);
+		var mode = r && (r.mode === 'fullscreen' || r.mode === 'inline') ? r.mode : S.ctx.displayMode;
+		applyContext({displayMode: mode});
+		if (mode !== want) toast('info', want === 'fullscreen' ? 'Fullscreen isn\u2019t available here.' : 'Couldn\u2019t leave fullscreen.', {id: 'fs'});
+	} catch (e) { toast('error', 'Couldn\u2019t change the display mode: ' + e.message, {id: 'fs'}); }
+}
+
+/* ================= tool result & loading ================= */
+/* Opened by Docsie's explore_data tool, the result carries a signed dataset reference. Opened as an installed app,
+   it carries the agent's arguments ("input"): a workspace file, an AI Table or the sample, or nothing, and then the
+   user picks. Either way the screen loads the rows itself with the data_load_rows Docsie tool. */
+function onToolResult(p) {
+	if (!p || typeof p !== 'object') return;
+	if (p.isError) { S.status = 'error'; S.msg = 'Docsie couldn\u2019t prepare this dataset'; S.detail = textOf(p) || 'The tool returned an error.'; render(); return; }
+	var sc = p.structuredContent;
+	if (!sc || typeof sc !== 'object') sc = parseJSON(textOf(p)) || {};
+	if (sc.dataset && typeof sc.dataset === 'object') {
+		S.dataset = sc.dataset; S.source = {dataset_ref: sc.dataset.ref};
+		S.suggested = sc.suggested_view && typeof sc.suggested_view === 'object' ? sc.suggested_view : null;
+		if (Array.isArray(sc.rows)) { finishLoad({columns: sc.columns || sc.dataset.columns, rows: sc.rows, total_rows: sc.total_rows, truncated: sc.truncated}); return; }
+		loadRows(); return;
+	}
+	var input = sc.input && typeof sc.input === 'object' ? sc.input : (S.toolArgs || {});
+	S.hint = viewHint(input);
+	var src = sourceOf(input), saved = S.savedState;
+	if (!src && saved && typeof saved === 'object' && typeof saved.dataset_ref === 'string' && saved.dataset_ref) src = {dataset_ref: saved.dataset_ref};
+	if (src) { S.source = src; loadRows(); } else openPicker();
+}
+function sourceOf(a) {
+	if (!a || typeof a !== 'object') return null;
+	if (typeof a.dataset_ref === 'string' && a.dataset_ref) return {dataset_ref: a.dataset_ref};
+	if (a.file_id) return a.sheet ? {file_id: String(a.file_id), sheet: String(a.sheet)} : {file_id: String(a.file_id)};
+	if (a.table_id) return {table_id: String(a.table_id)};
+	if (a.sample === true || a.use_sample === true) return {sample: true};
+	return null;
+}
+function viewHint(a) {
+	var h = {}, list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === 'string') : (typeof v === 'string' && v ? [v] : []);
+	['rows', 'columns', 'values'].forEach((k) => { var l = list(a && a[k]); if (l.length) h[k] = l; });
+	if (a && typeof a.chart === 'string' && a.chart) h.chart = a.chart;
+	return Object.keys(h).length ? h : null;
+}
+async function loadRows() {
+	if (!S.source) return;
+	S.status = 'loading'; S.msg = ''; S.detail = ''; render();
+	try {
+		var args = Object.assign({}, S.source);
+		if (S.hint && !S.suggested) args.view = S.hint;
+		var r = await request('tools/call', {name: 'data_load_rows', arguments: args}, 180000);
+		if (!r) throw new Error('Docsie returned an empty response.');
+		if (r.isError) throw new Error(textOf(r) || 'Loading the rows failed.');
+		var sc = r.structuredContent || parseJSON(textOf(r));
+		if (!sc || !Array.isArray(sc.rows)) throw new Error('The response did not include any rows.');
+		var d = S.dataset || {};
+		S.dataset = {ref: sc.dataset_ref || d.ref, title: d.title || sc.title, source: d.source || sc.source, row_count: sc.total_rows, columns: sc.columns};
+		S.source = {dataset_ref: S.dataset.ref};
+		if (!S.suggested && sc.suggested_view && typeof sc.suggested_view === 'object') S.suggested = sc.suggested_view;
+		finishLoad(sc);
+	} catch (e) {
+		S.status = 'error'; S.msg = 'Couldn\u2019t load the rows'; S.detail = e.message || String(e); render();
+	}
+}
+async function openPicker() {
+	S.status = 'pick'; S.picker = {loading: true}; render();
+	try {
+		var r = await request('tools/call', {name: 'data_sources', arguments: {}}, 60000);
+		if (!r || r.isError) throw new Error(textOf(r) || 'Docsie couldn\u2019t list your data.');
+		var sc = r.structuredContent || parseJSON(textOf(r)) || {};
+		S.picker = {files: Array.isArray(sc.files) ? sc.files : [], tables: Array.isArray(sc.tables) ? sc.tables : [], sample: sc.sample || 'Sample data'};
+	} catch (e) { S.picker = {error: e.message || String(e), files: [], tables: [], sample: 'Sample data'}; }
+	if (S.status === 'pick') render();
+}
+function pickSource(src) {
+	S.source = src; S.dataset = null; S.suggested = null; S.hint = null; S.view = null;
+	S.userChanged = true; S.pickedNow = true;
+	loadRows();
+}
+function finishLoad(sc) {
+	var cols = Array.isArray(sc.columns) && sc.columns.length ? sc.columns : (S.dataset.columns || []);
+	ingest(cols, sc.rows);
+	S.totalRows = toNum(sc.total_rows) != null ? +sc.total_rows : (toNum(S.dataset.row_count) != null ? +S.dataset.row_count : S.data.length);
+	S.truncated = !!sc.truncated || S.totalRows > S.data.length;
+	if (!S.fields.length) { S.status = 'error'; S.msg = 'This dataset has no columns'; S.detail = ''; render(); return; }
+	S.initialView = normView(S.suggested);
+	S.view = applySavedState() || clone(S.initialView);
+	S.lastFirst = S.view.rows[0];
+	S.res = null; S.resSig = '';
+	S.status = 'ready';
+	if (S.pickedNow) { S.pickedNow = false; scheduleSave(); }
+	render();
+}
+function normType(t) {
+	t = String(t || '').toLowerCase();
+	if (/^(number|integer|int|float|double|decimal|numeric|bigint|real|currency|percent)/.test(t)) return 'number';
+	if (/^(date|datetime|timestamp)/.test(t)) return 'date';
+	return 'string';
+}
+function ingest(cols, rows) {
+	var seen = {};
+	var fields = (cols || []).map((c, i) => {
+		var name = String(c && c.name != null ? c.name : 'column_' + (i + 1));
+		if (seen[name]) name = name + ' (' + (++seen[name]) + ')'; else seen[name] = 1;
+		var type = normType(c && c.type);
+		return {name: name, type: type, i: i, label: c && c.label ? String(c.label) : humanize(name), kind: type === 'number' ? 'measure' : 'dim', currency: type === 'number' && CURRENCY_RE.test(name)};
+	});
+	var data = Array.isArray(rows) ? rows : [];
+	if (data.length && !Array.isArray(data[0]) && data[0] && typeof data[0] === 'object') {
+		var names = (cols || []).map((c) => c && c.name);
+		data = data.map((o) => { return names.map((n) => o ? o[n] : null); });
+	}
+	var numI = fields.filter((f) => f.type === 'number').map((f) => f.i);
+	var strI = fields.filter((f) => f.type !== 'number').map((f) => f.i);
+	for (var r = 0; r < data.length; r++) {
+		var row = data[r];
+		if (!Array.isArray(row)) row = data[r] = [];
+		for (var a = 0; a < numI.length; a++) { var i = numI[a], v = row[i]; if (typeof v !== 'number') row[i] = (v == null || v === '' || typeof v === 'boolean') ? null : (isFinite(+v) ? +v : null); else if (!isFinite(v)) row[i] = null; }
+		for (var b = 0; b < strI.length; b++) { var j = strI[b], w = row[j]; if (w != null && typeof w !== 'string') row[j] = typeof w === 'object' ? JSON.stringify(w) : String(w); }
+	}
+	S.fields = fields; S.byName = new Map(fields.map((f) => [f.name, f]));
+	S.data = data; S.distinct = new Map(); S.extents = new Map(); S.grains = new Map();
+}
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/* ================= view model ================= */
+function normAgg(a) {
+	a = String(a == null ? 'sum' : a).toLowerCase().replace(/[\s-]+/g, '_');
+	var al = {average:'avg',mean:'avg',countd:'count_distinct',distinct:'count_distinct',distinct_count:'count_distinct',countdistinct:'count_distinct',unique:'count_distinct',cnt:'count',total:'sum',minimum:'min',maximum:'max',med:'median'};
+	a = al[a] || a;
+	return own(AGG_NAME, a) ? a : 'sum';
+}
+function fixAgg(f, agg) { return f.type === 'number' ? agg : (DIM_AGGS.indexOf(agg) >= 0 ? agg : 'count_distinct'); }
+function defaultSort(name) { var f = name && S.byName.get(name); return f && f.type === 'date' ? {by: 'label', dir: 'asc'} : {by: 'value', dir: 'desc'}; }
+function normView(src) {
+	var v = src && typeof src === 'object' ? src : {};
+	var has = (n) => typeof n === 'string' && S.byName.has(n);
+	var names = (a) => { return uniq((Array.isArray(a) ? a : (typeof a === 'string' ? [a] : [])).map((x) => typeof x === 'string' ? x : (x && x.field)).filter(has)); };
+	var rows = names(v.rows), columns = names(v.columns).filter((n) => rows.indexOf(n) < 0);
+	var values = (Array.isArray(v.values) ? v.values : (v.values ? [v.values] : [])).map((x) => { return typeof x === 'string' ? {field: x} : x; })
+		.filter((x) => x && has(x.field))
+		.map((x) => { var f = S.byName.get(x.field); return {field: f.name, agg: fixAgg(f, normAgg(x.agg))}; });
+	values = values.filter((x, i) => { return values.findIndex((y) => y.field === x.field && y.agg === x.agg) === i; });
+	var dates = S.fields.filter((f) => f.type === 'date'), strs = S.fields.filter((f) => f.type === 'string'), nums = S.fields.filter((f) => f.type === 'number');
+	if (!rows.length && !columns.length) { var d = dates[0] || strs[0]; if (d) rows.push(d.name); }
+	if (!values.length) { if (nums[0]) values.push({field: nums[0].name, agg: 'sum'}); else if (S.fields[0]) values.push({field: S.fields[0].name, agg: 'count'}); }
+	var out = {rows: rows, columns: columns, values: values, filters: {}, date_grain: {}, chart: 'bar', sort: null, top_n: null, subtotals: !!v.subtotals};
+	var dg = v.date_grain && typeof v.date_grain === 'object' ? v.date_grain : {};
+	rows.concat(columns).forEach((n) => { var f = S.byName.get(n); if (f.type === 'date') out.date_grain[n] = own(GRAIN_OK, dg[n]) ? dg[n] : autoGrain(f); });
+	var fl = v.filters && typeof v.filters === 'object' ? v.filters : {};
+	Object.keys(fl).forEach((k) => {
+		if (!has(k)) return;
+		var f = S.byName.get(k), spec = fl[k];
+		if (Array.isArray(spec)) out.filters[k] = spec.map((x) => x == null ? null : String(x));
+		else if (spec && typeof spec === 'object') {
+			var lo = spec.min != null ? spec.min : (spec.gte != null ? spec.gte : spec.from), hi = spec.max != null ? spec.max : (spec.lte != null ? spec.lte : spec.to);
+			if (f.type === 'date') { lo = lo == null ? null : String(lo); hi = hi == null ? null : String(hi); } else { lo = toNum(lo); hi = toNum(hi); }
+			out.filters[k] = lo == null && hi == null ? null : {min: lo, max: hi};
+		} else out.filters[k] = spec == null ? null : [String(spec)];
+	});
+	var c = String(v.chart || '').toLowerCase().replace(/[\s-]+/g, '_');
+	if (c === 'stacked' || c === 'stackedbar' || c === 'stacked_column') c = 'stacked_bar';
+	if (c === 'column' || c === 'bars') c = 'bar';
+	if (c === 'pivot') c = 'table';
+	c = {pie: 'donut', doughnut: 'donut', bubble: 'scatter', stackedarea: 'stacked_area', area_stacked: 'stacked_area', bar_line: 'combo', barline: 'combo'}[c] || c;
+	var ft = rows[0] ? S.byName.get(rows[0]).type : null;
+	out.chart = own(CHART_OK, c) ? c : (ft === 'date' ? 'line' : 'bar');
+	var s = v.sort && typeof v.sort === 'object' ? v.sort : null;
+	if (s && (s.by === 'label' || s.by === 'value')) out.sort = {by: s.by, dir: (s.dir || s.order) === 'desc' ? 'desc' : 'asc'};
+	else out.sort = defaultSort(rows[0]);
+	var tn = toNum(v.top_n); out.top_n = tn && tn > 0 ? Math.round(tn) : null;
+	return out;
+}
+function ensureGrain(n) { var f = S.byName.get(n); if (f && f.type === 'date' && !own(GRAIN_OK, S.view.date_grain[n])) S.view.date_grain[n] = autoGrain(f); }
+
+/* ================= dimensions & aggregates ================= */
+function dimKeyFn(f, grain) {
+	var i = f.i;
+	if (f.type === 'date') {
+		var cache = new Map(), g = grain || 'month';
+		return (row) => { var v = row[i]; if (v == null || v === '') return BLANK; var k = cache.get(v); if (k === undefined) { k = dateKey(v, g); cache.set(v, k); } return k; };
+	}
+	if (f.type === 'number') return (row) => { var v = row[i]; return v == null ? BLANK : String(v); };
+	return (row) => { var v = row[i]; return v == null || v === '' ? BLANK : v; };
+}
+function dimCmp(f) {
+	if (f.type === 'number') return (a, b) => (+a) - (+b);
+	if (f.type === 'date') return (a, b) => a < b ? -1 : a > b ? 1 : 0;
+	return (a, b) => COLL.compare(a, b);
+}
+function dimLabelFn(f, grain) {
+	if (f.type === 'date') return (k) => dateLabel(k, grain || 'month');
+	return (k) => k === BLANK ? '(blank)' : k;
+}
+function dimSpec(name, view) {
+	var f = S.byName.get(name), grain = f.type === 'date' ? (view.date_grain[name] || 'month') : null, lab = dimLabelFn(f, grain), cache = new Map();
+	return {f: f, name: name, grain: grain, key: dimKeyFn(f, grain), cmp: dimCmp(f), title: f.label,
+		label: (k) => { var l = cache.get(k); if (l === undefined) { l = lab(k); cache.set(k, l); } return l; }};
+}
+function valSpec(x) {
+	var f = S.byName.get(x.field), agg = x.agg, mk, add, fin;
+	switch (agg) {
+		case 'avg': mk = () => { return {s: 0, n: 0}; }; add = (a, v) => { if (v != null) { a.s += v; a.n++; } }; fin = (a) => a.n ? a.s / a.n : null; break;
+		case 'count': mk = () => { return {n: 0}; }; add = (a, v) => { if (v != null && v !== '') a.n++; }; fin = (a) => a.n; break;
+		case 'count_distinct': mk = () => { return {s: new Set()}; }; add = (a, v) => { if (v != null && v !== '') a.s.add(v); }; fin = (a) => a.s.size; break;
+		case 'min': mk = () => { return {m: Infinity, n: 0}; }; add = (a, v) => { if (v != null) { if (v < a.m) a.m = v; a.n++; } }; fin = (a) => a.n ? a.m : null; break;
+		case 'max': mk = () => { return {m: -Infinity, n: 0}; }; add = (a, v) => { if (v != null) { if (v > a.m) a.m = v; a.n++; } }; fin = (a) => a.n ? a.m : null; break;
+		case 'median': mk = () => { return {a: []}; }; add = (a, v) => { if (v != null) a.a.push(v); }; fin = (a) => { var z = a.a; if (!z.length) return null; z.sort((p, q) => p - q); var h = z.length >> 1; return z.length % 2 ? z[h] : (z[h - 1] + z[h]) / 2; }; break;
+		default: mk = () => { return {s: 0, n: 0}; }; add = (a, v) => { if (v != null) { a.s += v; a.n++; } }; fin = (a) => a.n ? a.s : null;
+	}
+	var fmt = agg === 'count' || agg === 'count_distinct' ? 'integer' : (f.currency ? 'currency' : 'number');
+	return {field: f.name, f: f, agg: agg, i: f.i, mk: mk, add: add, fin: fin, fmt: fmt, label: f.label + ' (' + AGG_WORD[agg] + ')', additive: agg === 'sum' || agg === 'count'};
+}
+function buildPred(filters) {
+	var tests = [];
+	Object.keys(filters || {}).forEach((name) => {
+		var f = S.byName.get(name), spec = filters[name];
+		if (!f || spec == null) return;
+		if (Array.isArray(spec)) {
+			var set = new Set(spec.map((x) => x == null ? BLANK : String(x)));
+			var kf = f.type === 'date' ? dimKeyFn(f, detectGrain(spec) || 'day') : dimKeyFn(f);
+			tests.push((row) => set.has(kf(row)));
+		} else if (typeof spec === 'object') {
+			var lo = spec.min, hi = spec.max, i = f.i;
+			if (lo == null && hi == null) return;
+			if (f.type === 'date') tests.push((row) => { var v = row[i]; if (v == null || v === '') return false; var d = String(v).slice(0, 10); return (lo == null || d >= lo) && (hi == null || d <= hi); });
+			else tests.push((row) => { var v = row[i]; return v != null && (lo == null || v >= lo) && (hi == null || v <= hi); });
+		}
+	});
+	if (!tests.length) return null;
+	if (tests.length === 1) return tests[0];
+	return (row) => { for (var k = 0; k < tests.length; k++) if (!tests[k](row)) return false; return true; };
+}
+function distinctKeys(f, grain) {
+	var ck = f.name + '|' + (grain || ''), hit = S.distinct.get(ck);
+	if (hit) return hit;
+	var kf = dimKeyFn(f, grain), m = new Map(), D = S.data;
+	for (var r = 0; r < D.length; r++) { var k = kf(D[r]); m.set(k, (m.get(k) || 0) + 1); }
+	var cmp = dimCmp(f), lab = dimLabelFn(f, grain);
+	var out = Array.from(m, (e) => { return {key: e[0], count: e[1], label: lab(e[0])}; });
+	out.sort((a, b) => { var ab = a.key === BLANK, bb = b.key === BLANK; if (ab !== bb) return ab ? 1 : -1; return cmp(a.key, b.key); });
+	S.distinct.set(ck, out);
+	return out;
+}
+function extent(f) {
+	var hit = S.extents.get(f.name); if (hit) return hit;
+	var lo = Infinity, hi = -Infinity, i = f.i, D = S.data;
+	for (var r = 0; r < D.length; r++) { var v = D[r][i]; if (v != null) { if (v < lo) lo = v; if (v > hi) hi = v; } }
+	var e = lo === Infinity ? {lo: null, hi: null} : {lo: lo, hi: hi};
+	S.extents.set(f.name, e);
+	return e;
+}
+
+/* ================= pivot engine (single pass, Map keys) ================= */
+function viewSig(v) { return JSON.stringify([v.rows, v.columns, v.values, v.filters, v.date_grain, v.sort, v.top_n, v.subtotals]); }
+function ensureResult() {
+	var sig = viewSig(S.view);
+	if (!S.res || S.resSig !== sig) { S.res = compute(S.view); S.resSig = sig; S.chartSig = ''; }
+	return S.res;
+}
+function compute(view) {
+	var t0 = performance.now(), data = S.data, N = data.length;
+	var rd = view.rows.map((n) => dimSpec(n, view)), cd = view.columns.map((n) => dimSpec(n, view));
+	var vs = view.values.map(valSpec), nv = vs.length, nr = rd.length, nc = cd.length;
+	var pred = buildPred(view.filters);
+	var mkAcc = () => { var a = new Array(nv); for (var k = 0; k < nv; k++) a[k] = vs[k].mk(); return a; };
+	var addAcc = (a, row) => { for (var k = 0; k < nv; k++) vs[k].add(a[k], row[vs[k].i]); };
+	var topSet = null, topInfo = null, r, row, a, L;
+	if (view.top_n && nr && nv) {
+		var v0 = vs[0], k0 = rd[0].key, tm = new Map();
+		for (r = 0; r < N; r++) { row = data[r]; if (pred && !pred(row)) continue; var tk = k0(row); a = tm.get(tk); if (!a) { a = v0.mk(); tm.set(tk, a); } v0.add(a, row[v0.i]); }
+		if (tm.size > view.top_n) {
+			var arr = Array.from(tm, (e) => [e[0], v0.fin(e[1])]);
+			arr.sort((x, y) => cmpDir(x[1], y[1], -1));
+			topSet = new Set(arr.slice(0, view.top_n).map((x) => x[0]));
+			topInfo = {n: view.top_n, of: tm.size};
+		}
+	}
+	var cell = new Map(), rowT = new Map(), colT = new Map(), rowParts = new Map(), colParts = new Map(), lv = [];
+	for (L = 1; L < nr; L++) lv[L] = {tot: new Map(), cell: new Map()};
+	var subCells = !!view.subtotals && nr > 1 && nc > 0;
+	var grand = mkAcc(), rk = new Array(nr), ck = new Array(nc), n = 0, j;
+	for (r = 0; r < N; r++) {
+		row = data[r];
+		if (pred && !pred(row)) continue;
+		for (j = 0; j < nr; j++) rk[j] = rd[j].key(row);
+		if (topSet && !topSet.has(rk[0])) continue;
+		n++;
+		for (j = 0; j < nc; j++) ck[j] = cd[j].key(row);
+		var rkey = nr ? rk.join(SEP) : '', ckey = nc ? ck.join(SEP) : '';
+		a = rowT.get(rkey); if (!a) { a = mkAcc(); rowT.set(rkey, a); rowParts.set(rkey, rk.slice()); } addAcc(a, row);
+		if (nc) {
+			a = colT.get(ckey); if (!a) { a = mkAcc(); colT.set(ckey, a); colParts.set(ckey, ck.slice()); } addAcc(a, row);
+			var key = rkey + SEP2 + ckey; a = cell.get(key); if (!a) { a = mkAcc(); cell.set(key, a); } addAcc(a, row);
+		}
+		addAcc(grand, row);
+		if (nr > 1) {
+			var p = rk[0];
+			for (L = 1; L < nr; L++) {
+				var o = lv[L];
+				a = o.tot.get(p); if (!a) { a = mkAcc(); o.tot.set(p, a); } addAcc(a, row);
+				if (subCells) { var sk = p + SEP2 + ckey; a = o.cell.get(sk); if (!a) { a = mkAcc(); o.cell.set(sk, a); } addAcc(a, row); }
+				p += SEP + rk[L];
+			}
+		}
+	}
+	var fin = (acc) => { var out = new Array(nv); for (var k = 0; k < nv; k++) out[k] = vs[k].fin(acc[k]); return out; };
+	var finMap = (m) => { m.forEach((acc, k) => { m.set(k, fin(acc)); }); };
+	finMap(cell); finMap(rowT); finMap(colT);
+	for (L = 1; L < nr; L++) { finMap(lv[L].tot); finMap(lv[L].cell); }
+	var grandF = fin(grand);
+	var rows = [];
+	rowParts.forEach((parts, key) => {
+		var pre = [], acc = '';
+		for (var q = 0; q < parts.length; q++) { acc = q ? acc + SEP + parts[q] : parts[q]; pre.push(acc); }
+		rows.push({key: key, parts: parts, pre: pre, labels: parts.map((x, q) => rd[q].label(x))});
+	});
+	var dir = view.sort && view.sort.dir === 'desc' ? -1 : 1, byVal = !!(view.sort && view.sort.by === 'value' && nv);
+	var valAt = (rw, q) => { var m = q === nr - 1 ? rowT : lv[q + 1].tot, x = m.get(rw.pre[q]); return x ? x[0] : null; };
+	if (nr) rows.sort((x, y) => {
+		for (var q = 0; q < nr; q++) {
+			if (x.parts[q] === y.parts[q]) continue;
+			var xb = x.parts[q] === BLANK, yb = y.parts[q] === BLANK;
+			if (xb !== yb) return xb ? 1 : -1;
+			if (byVal) { var c = cmpDir(valAt(x, q), valAt(y, q), dir); if (c) return c; return rd[q].cmp(x.parts[q], y.parts[q]); }
+			var c2 = rd[q].cmp(x.parts[q], y.parts[q]);
+			return q === 0 ? dir * c2 : c2;
+		}
+		return 0;
+	});
+	var cols = [];
+	colParts.forEach((parts, key) => { cols.push({key: key, parts: parts, labels: parts.map((x, q) => cd[q].label(x))}); });
+	cols.sort((x, y) => {
+		for (var q = 0; q < nc; q++) {
+			if (x.parts[q] === y.parts[q]) continue;
+			var xb = x.parts[q] === BLANK, yb = y.parts[q] === BLANK;
+			if (xb !== yb) return xb ? 1 : -1;
+			return cd[q].cmp(x.parts[q], y.parts[q]);
+		}
+		return 0;
+	});
+	var colsTotal = cols.length;
+	if (cols.length > MAX_COLS) cols = cols.slice(0, MAX_COLS);
+	var ms = performance.now() - t0;
+	return {rd: rd, cd: cd, vs: vs, nr: nr, nc: nc, nv: nv, n: n, rows: rows, cols: cols, colsTotal: colsTotal, cell: cell, rowT: rowT, colT: colT, lv: lv, grand: grandF, topInfo: topInfo, subOn: !!view.subtotals && nr > 1, ms: ms};
+}
+
+/* grid = the pivot table as displayed (and exported) */
+function buildGrid(res, maxRows) {
+	var nr = res.nr, nc = res.nc, nv = res.nv, leaf = [], k;
+	if (nc) { res.cols.forEach((c) => { for (k = 0; k < nv; k++) leaf.push({c: c, k: k}); }); for (k = 0; k < nv; k++) leaf.push({total: true, k: k}); }
+	else for (k = 0; k < nv; k++) leaf.push({k: k});
+	var rowVals = (rw) => { return leaf.map((l) => (l.total || !nc) ? pick(res.rowT.get(rw.key), l.k) : pick(res.cell.get(rw.key + SEP2 + l.c.key), l.k)); };
+	var subVals = (L, p) => { return leaf.map((l) => (l.total || !nc) ? pick(res.lv[L].tot.get(p), l.k) : pick(res.lv[L].cell.get(p + SEP2 + l.c.key), l.k)); };
+	var body = [], truncated = false, rows = res.rows;
+	for (var i = 0; i < rows.length; i++) {
+		if (body.length >= maxRows) { truncated = true; break; }
+		var rw = rows[i];
+		body.push({kind: 'row', parts: rw.parts, labels: rw.labels, vals: rowVals(rw)});
+		if (res.subOn) {
+			var nx = rows[i + 1];
+			for (var L = nr - 1; L >= 1; L--) {
+				if (!nx || nx.pre[L - 1] !== rw.pre[L - 1]) body.push({kind: 'sub', level: L, labels: rw.labels.slice(0, L), vals: subVals(L, rw.pre[L - 1])});
+			}
+		}
+	}
+	var total = nr ? {kind: 'total', vals: leaf.map((l) => (l.total || !nc) ? res.grand[l.k] : pick(res.colT.get(l.c.key), l.k))} : null;
+	return {leaf: leaf, body: body, total: total, truncated: truncated, rowCount: rows.length};
+}
+function headerModel(res) {
+	var nr = res.nr, nc = res.nc, nv = res.nv, nLab = Math.max(1, nr), out = [];
+	var rdLab = nr ? res.rd.map((d) => d.title) : [''];
+	if (!nc) { out.push(rdLab.map((t, j) => { return {t: t, cls: 'rh' + (j === 0 ? ' s0' : '')}; }).concat(res.vs.map((v) => { return {t: v.label, cls: 'vh'}; }))); return out; }
+	var nH = nc + 1;
+	for (var L = 0; L < nc; L++) {
+		var row = [{t: res.cd[L].title, colspan: nLab, cls: 'ch s0'}], cols = res.cols, i = 0;
+		while (i < cols.length) {
+			var pre = cols[i].parts.slice(0, L + 1).join(SEP), j = i + 1;
+			while (j < cols.length && cols[j].parts.slice(0, L + 1).join(SEP) === pre) j++;
+			row.push({t: cols[i].labels[L], colspan: (j - i) * nv, rowspan: (L === nc - 1 && nv === 1) ? 2 : 1, cls: 'mh'});
+			i = j;
+		}
+		if (L === 0) row.push({t: 'Total', colspan: nv, rowspan: nv === 1 ? nH : nc, cls: 'mh tc'});
+		out.push(row);
+	}
+	var last = rdLab.map((t, j) => { return {t: t, cls: 'rh' + (j === 0 ? ' s0' : '')}; });
+	if (nv > 1) { res.cols.forEach(() => { res.vs.forEach((v) => { last.push({t: v.label, cls: 'vh'}); }); }); res.vs.forEach((v) => { last.push({t: v.label, cls: 'vh tc'}); }); }
+	out.push(last);
+	return out;
+}
+function denseHeader(H, width) {
+	var g = [];
+	H.forEach((row, ri) => {
+		g[ri] = g[ri] || [];
+		var c = 0;
+		row.forEach((cell) => {
+			while (g[ri][c] !== undefined) c++;
+			var rs = cell.rowspan || 1, cs = cell.colspan || 1;
+			for (var dr = 0; dr < rs; dr++) { g[ri + dr] = g[ri + dr] || []; for (var dc = 0; dc < cs; dc++) g[ri + dr][c + dc] = (dr === 0 && dc === 0) ? cell.t : ''; }
+			c += cs;
+		});
+	});
+	return g.map((r) => { var o = []; for (var i = 0; i < width; i++) o.push(r[i] == null ? '' : r[i]); return o; });
+}
+
+/* chart model (shared by renderer and export) */
+// colour follows the member: stable slot when the field has <= 8 members overall
+function keyColor(d, key, idx) {
+	var p = pal(), all = distinctKeys(d.f, d.grain);
+	if (all.length <= MAX_SERIES) for (var j = 0; j < all.length; j++) if (all[j].key === key) return p[j];
+	return p[idx % p.length];
+}
+function seriesColor(res, c, si) { return res.nc === 1 ? keyColor(res.cd[0], c.parts[0], si) : pal()[si % MAX_SERIES]; }
+function chartModel(res, view) {
+	if (!res.nv) return null;
+	var t = view.chart;
+	if (t === 'scatter') return scatterModel(res, view);
+	if (t === 'combo') return res.nv < 2 ? {hint: 'two', type: t} : !res.nr ? {hint: 'rows', type: t} : comboModel(res);
+	if (t === 'donut' || t === 'treemap') return !res.nr ? {hint: 'rows', type: t} : !res.vs[0].additive ? {hint: 'additive', type: t} : t === 'donut' ? donutModel(res) : treemapModel(res);
+	var v = res.vs[0], notes = [], cats, series, catTitle, p = pal();
+	if (res.nr) {
+		var all = res.rows, rr = all.slice(0, MAX_CATS);
+		if (all.length > MAX_CATS) notes.push('Showing the first ' + MAX_CATS + ' of ' + fmtInt(all.length) + ' categories');
+		catTitle = res.rd.map((d) => d.title).join(' · ');
+		if (res.nc) {
+			var cols = res.cols, chosen = cols;
+			if (cols.length > MAX_SERIES) {
+				chosen = cols.map((c, i) => ({c: c, i: i, v: Math.abs(pick(res.colT.get(c.key), 0) || 0)})).sort((a, b) => b.v - a.v).slice(0, MAX_SERIES).sort((a, b) => a.i - b.i).map((x) => x.c);
+				notes.push('Showing the ' + MAX_SERIES + ' largest of ' + fmtInt(res.colsTotal) + ' series');
+			}
+			series = chosen.map((c, si) => ({name: c.labels.join(' · '), color: seriesColor(res, c, si), values: rr.map((rw) => pick(res.cell.get(rw.key + SEP2 + c.key), 0))}));
+		} else series = [{name: v.label, color: p[0], values: rr.map((rw) => pick(res.rowT.get(rw.key), 0))}];
+		cats = rr.map((rw) => rw.labels.join(' · '));
+	} else if (res.nc) {
+		var cs = res.cols.slice(0, MAX_CATS);
+		if (res.colsTotal > MAX_CATS) notes.push('Showing the first ' + MAX_CATS + ' of ' + fmtInt(res.colsTotal) + ' categories');
+		catTitle = res.cd.map((d) => d.title).join(' · ');
+		cats = cs.map((c) => c.labels.join(' · '));
+		series = [{name: v.label, color: p[0], values: cs.map((c) => pick(res.colT.get(c.key), 0))}];
+	} else { catTitle = ''; cats = ['All rows']; series = [{name: v.label, color: p[0], values: [res.grand[0]]}]; }
+	return {type: t, cats: cats, series: series, v: v, catTitle: catTitle, notes: notes};
+}
+// first-level members of the first row dimension with the first value, in display order
+function level0(res) {
+	var seen = new Set(), out = [];
+	res.rows.forEach((r) => { var k = r.parts[0]; if (seen.has(k)) return; seen.add(k); out.push({key: k, name: r.labels[0], value: pick(res.nr === 1 ? res.rowT.get(r.key) : res.lv[1].tot.get(k), 0)}); });
+	return out;
+}
+function donutModel(res) {
+	var v = res.vs[0], d0 = res.rd[0], notes = [], neg = 0;
+	var items = level0(res).filter((d) => { if (d.value != null && d.value < 0) neg++; return d.value > 0; });
+	if (!items.length) return {hint: 'positive', type: 'donut'};
+	if (items.length > MAX_SERIES) {
+		var keep = new Set(items.slice().sort((a, b) => b.value - a.value).slice(0, MAX_SERIES)), rest = items.filter((d) => !keep.has(d));
+		items = items.filter((d) => keep.has(d)).concat([{name: 'Other (' + rest.length + ')', value: rest.reduce((s, d) => s + d.value, 0), color: otherColor(), other: true}]);
+	}
+	items.forEach((d, i) => { if (!d.other) d.color = keyColor(d0, d.key, i); });
+	if (res.nc) notes.push('Uses the first value by ' + d0.title + '; Columns are not used');
+	if (neg) notes.push(neg + ' negative ' + (neg > 1 ? 'values are' : 'value is') + ' left out');
+	return {type: 'donut', items: items, total: items.reduce((s, d) => s + d.value, 0), v: v, notes: notes, legend: [], cats: items.map((d) => d.name), series: [{name: v.label, values: items.map((d) => d.value)}]};
+}
+function treemapModel(res) {
+	var v = res.vs[0], d0 = res.rd[0], depth = Math.min(2, res.nr), notes = [], gm = new Map();
+	level0(res).forEach((d) => { if (d.value > 0) { d.children = []; gm.set(d.key, d); } });
+	if (depth > 1) res.rows.forEach((r) => {
+		var g = gm.get(r.parts[0]); if (!g) return;
+		if (g.children.some((c) => c.key === r.pre[1])) return;
+		var x = pick(res.nr === 2 ? res.rowT.get(r.key) : res.lv[2].tot.get(r.pre[1]), 0);
+		if (x > 0) g.children.push({key: r.pre[1], name: r.labels[1], value: x});
+	});
+	var groups = Array.from(gm.values()).sort((a, b) => b.value - a.value);
+	if (!groups.length) return {hint: 'positive', type: 'treemap'};
+	if (groups.length > MAX_SERIES) {
+		var rest = groups.slice(MAX_SERIES);
+		groups = groups.slice(0, MAX_SERIES).concat([{name: 'Other (' + rest.length + ')', value: rest.reduce((s, d) => s + d.value, 0), color: otherColor(), children: rest.map((d) => ({name: d.name, value: d.value}))}]);
+		notes.push('The ' + rest.length + ' smallest ' + d0.title + ' values are grouped as Other');
+	}
+	groups.forEach((g, i) => { if (!g.color) g.color = keyColor(d0, g.key, i); });
+	groups.forEach((g) => { if (g.children.length > 40) { var big = g.children.sort((a, b) => b.value - a.value).slice(0, 39), small = g.children.slice(39); g.children = big.concat([{name: 'Other (' + small.length + ')', value: small.reduce((s, d) => s + d.value, 0)}]); } });
+	if (res.nc) notes.push('Uses the first value by ' + res.rd.slice(0, depth).map((d) => d.title).join(' › ') + '; Columns are not used');
+	var nodes = [];
+	groups.forEach((g) => { if (depth > 1 && g.children.length) g.children.forEach((c) => { nodes.push({path: [g.name, c.name], value: c.value}); }); else nodes.push({path: [g.name], value: g.value}); });
+	return {type: 'treemap', groups: groups, depth: depth, total: groups.reduce((s, d) => s + d.value, 0), v: v, notes: notes, legend: groups.length > 1 ? groups : [], cats: groups.map((g) => g.name), series: [{name: v.label, values: groups.map((g) => g.value)}], nodes: nodes};
+}
+function comboModel(res) {
+	var rr = res.rows.slice(0, MAX_CATS), p = pal(), notes = [], val = (k) => rr.map((r) => pick(res.rowT.get(r.key), k));
+	if (res.rows.length > MAX_CATS) notes.push('Showing the first ' + MAX_CATS + ' of ' + fmtInt(res.rows.length) + ' categories');
+	if (res.nv > 2) notes.push('Uses the first two values: bars, then a line on the right axis');
+	if (res.nc) notes.push('Uses row totals; Columns are not used');
+	return {type: 'combo', v: res.vs[0], notes: notes, legend: [], catTitle: res.rd.map((d) => d.title).join(' · '), cats: rr.map((r) => r.labels.join(' · ')),
+		series: [{name: res.vs[0].label, values: val(0), color: p[0], fmt: res.vs[0].fmt, kind: 'bar'}, {name: res.vs[1].label, values: val(1), color: p[1], fmt: res.vs[1].fmt, kind: 'line'}]};
+}
+function scatterModel(res, view) {
+	if (res.nv < 2) return {hint: 'two', type: 'scatter'};
+	var xv = res.vs[0], yv = res.vs[1], sv = res.vs[2] || null, p = pal(), notes = [], groups = new Map(), n = 0, MAXP = 2000;
+	var add = (key, name, idx, pt) => {
+		if (pt[0] == null || pt[1] == null || n >= MAXP) return;
+		var g = groups.get(key);
+		if (!g) { if (groups.size >= 3) { g = groups.get('\u0000other'); if (!g) { g = {name: 'Other', color: otherColor(), points: []}; groups.set('\u0000other', g); } } else { g = {name: name, color: p[groups.size], points: []}; groups.set(key, g); } }
+		g.points.push(pt); n++;
+	};
+	if (res.nr) {
+		if (res.nc) res.cols.forEach((c, ci) => { res.rows.forEach((r) => { var a = res.cell.get(r.key + SEP2 + c.key); if (a) add(c.key, c.labels.join(' · '), ci, [a[0], a[1], r.labels.join(' · '), sv ? a[2] : null]); }); });
+		else res.rows.forEach((r) => { var a = res.rowT.get(r.key); if (a) add('', res.rd.map((d) => d.title).join(' · '), 0, [a[0], a[1], r.labels.join(' · '), sv ? a[2] : null]); });
+		if (n >= MAXP) notes.push('Showing the first ' + fmtInt(MAXP) + ' points');
+	} else {
+		if (xv.f.type !== 'number' || yv.f.type !== 'number') return {hint: 'numeric', type: 'scatter'};
+		var pred = buildPred(view.filters), idx = [], D = S.data;
+		for (var r = 0; r < D.length; r++) if (!pred || pred(D[r])) idx.push(r);
+		var step = Math.max(1, idx.length / MAXP), ck = res.cd.map((d) => d.key);
+		for (var q = 0; q < idx.length && n < MAXP; q += step) {
+			var row = D[idx[Math.floor(q)]], key = ck.map((f) => f(row)).join(SEP);
+			add(key, ck.length ? res.cd.map((d, j) => d.label(ck[j](row))).join(' · ') : 'Rows', 0, [row[xv.i], row[yv.i], 'Row ' + (idx[Math.floor(q)] + 1), sv && sv.f.type === 'number' ? row[sv.i] : null]);
+		}
+		notes.push('Each point is one row' + (idx.length > MAXP ? ' (an even sample of ' + fmtInt(MAXP) + ' of ' + fmtInt(idx.length) + ')' : ''));
+	}
+	if (groups.has('\u0000other')) notes.push('Scatter uses three colours; the remaining series are shown as Other');
+	var series = Array.from(groups.values());
+	if (!series.length) return {hint: 'positive', type: 'scatter'};
+	var raw = !res.nr, lab = (v) => raw ? v.f.label : v.label;
+	return {type: 'scatter', series: series, xv: xv, yv: yv, sv: sv, xl: lab(xv), yl: lab(yv), sl: sv ? lab(sv) : null, v: xv, notes: notes, legend: series.length > 1 ? series : [], cats: []};
+}
+function hintHTML(h, res) {
+	var t = h.type, name = {scatter: 'Scatter', combo: 'Combo', donut: 'Donut', treemap: 'Treemap'}[t] || 'This chart', used = new Set(S.view.values.map((x) => x.field)), btn = '';
+	var free = S.fields.find((f) => f.type === 'number' && !used.has(f.name)), dim = S.fields.find((f) => f.kind === 'dim' && S.view.columns.indexOf(f.name) < 0);
+	if (h.hint === 'two') {
+		if (free) btn = '<button class="btn sm" data-act="addValue" data-field="' + esc(free.name) + '" data-k="ev-addv">' + icon('sigma', 'sm') + 'Add ' + esc(free.label) + '</button>';
+		return emptyViz(t === 'scatter' ? 'scatter' : 'combo', name + ' needs two values', t === 'scatter' ? 'The first value on Values is the x axis and the second is the y axis. A third value sets the bubble size.' : 'The first value draws the bars and the second draws a line on its own axis.', btn);
+	}
+	if (h.hint === 'rows') {
+		if (dim) btn = '<button class="btn sm" data-act="addField" data-field="' + esc(dim.name) + '" data-k="ev-addr">' + icon('plus', 'sm') + 'Add ' + esc(dim.label) + ' to Rows</button>';
+		return emptyViz(t === 'combo' ? 'combo' : t === 'donut' ? 'donut' : 'tree', name + ' needs a dimension on Rows', 'Its slices come from the members of the first row dimension.', btn);
+	}
+	if (h.hint === 'additive') return emptyViz(t === 'donut' ? 'donut' : 'tree', name + ' shows shares of a total', 'Shares only add up with Sum or Count. ' + esc(res.vs[0].label) + ' uses ' + AGG_NAME[res.vs[0].agg] + '.', '<button class="btn sm" data-act="useSum" data-k="ev-sum">Use ' + (res.vs[0].f.type === 'number' ? 'Sum' : 'Count') + '</button>');
+	if (h.hint === 'numeric') return emptyViz('scatter', 'Scatter needs number fields', 'Without a dimension on Rows, each point is one row, so both values must be number fields. Add a dimension to Rows to plot aggregates instead.', '');
+	return emptyViz('info', 'Nothing to draw', 'All values are empty, zero or negative for this chart.', '');
+}
+/* ================= rendering ================= */
+var rafId = 0;
+function render() { if (rafId || S.torn) return; rafId = requestAnimationFrame(() => { rafId = 0; doRender(); }); }
+function doRender() {
+	var ae = document.activeElement, fk = ae && ae.dataset ? ae.dataset.k : null;
+	var inPop = POP && ae && POP.el.contains(ae);
+	renderHeader();
+	var ready = S.status === 'ready';
+	$('#state').hidden = ready; $('#body').hidden = !ready;
+	if (!ready) renderState();
+	else {
+		if (S.ui.fieldsHidden == null) S.ui.fieldsHidden = window.innerWidth > 0 && window.innerWidth < 620;
+		$('#body').classList.toggle('fc', !!S.ui.fieldsHidden);
+		renderFields(); renderShelves(); renderToolbar();
+		try { ensureResult(); renderKpis(); renderViz(); }
+		catch (e) { $('#viz').innerHTML = emptyViz('alert', 'Something went wrong drawing this view', esc(e.message || String(e)), '<button class="btn sm" data-act="reset">Reset view</button>'); }
+	}
+	if (fk && !inPop) focusKey(fk);
+}
+function focusKey(k) {
+	var els = document.querySelectorAll('[data-k]');
+	for (var i = 0; i < els.length; i++) if (els[i].dataset.k === k) { try { els[i].focus({preventScroll: true}); } catch (e) { els[i].focus(); } return true; }
+	return false;
+}
+function renderHeader() {
+	var ds = S.dataset, ready = S.status === 'ready';
+	var title = ds && ds.title ? ds.title : 'Data Explorer';
+	var meta = [];
+	if (ds) {
+		var rc = ready ? S.totalRows : toNum(ds.row_count);
+		if (rc != null) meta.push('<span class="mono">' + fmtInt(rc) + ' rows</span>');
+		if (ready) meta.push('<span class="mono">' + S.fields.length + ' fields</span>');
+		if (ds.source) meta.push('<span>' + esc(ds.source) + '</span>');
+	} else meta.push('<span>' + (S.status === 'pick' ? 'Choose a dataset' : 'Waiting for a dataset') + '</span>');
+	var m = meta.join('<span class="dot"></span>');
+	if (ready && S.truncated) m += '<span class="flag" title="Docsie sent a subset of the rows">' + icon('info', 'xs') + 'Showing first ' + fmtInt(S.data.length) + ' of ' + fmtInt(S.totalRows) + ' rows</span>';
+	var dis = ready ? '' : ' disabled';
+	var b = S.busy;
+	var h = '<div class="hdr-t"><h1 title="' + esc(title) + '">' + esc(title) + '</h1><div class="hdr-m">' + m + '</div></div><div class="hdr-a">' +
+		(ready ? '<button class="btn" data-act="changeData" data-k="change" aria-label="Change data" title="Explore other data from this workspace">' + icon('table', 'sm') + '<span class="lbl-x">Change data</span></button>' : '') +
+		'<button class="btn" data-act="export" data-fmt="xlsx" data-k="ex-xlsx" aria-label="Export XLSX" title="Export this view as an Excel workbook"' + dis + (b.xlsx ? ' aria-busy="true"' : '') + '>' + (b.xlsx ? '<span class="spin"></span>' : icon('download', 'sm')) + '<span><span class="lbl-x">Export </span>XLSX</span></button>' +
+		'<button class="btn" data-act="export" data-fmt="csv" data-k="ex-csv" aria-label="Export CSV" title="Export this view as CSV"' + dis + (b.csv ? ' aria-busy="true"' : '') + '>' + (b.csv ? '<span class="spin"></span>' : icon('download', 'sm')) + '<span><span class="lbl-x">Export </span>CSV</span></button>' +
+		'<button class="btn primary" data-act="report" data-k="report" aria-label="Write a report" title="Ask Docsie to write a report from this view"' + dis + (b.report ? ' aria-busy="true"' : '') + '>' + (b.report ? '<span class="spin"></span>' : icon('spark', 'sm')) + '<span class="lbl-r">Write a report</span></button>';
+	if (canFullscreen()) {
+		var fs = S.ctx.displayMode === 'fullscreen';
+		h += '<button class="btn icon ghost" data-act="fullscreen" data-k="fs" aria-label="' + (fs ? 'Exit fullscreen' : 'Open fullscreen') + '" title="' + (fs ? 'Exit fullscreen' : 'Fullscreen') + '">' + icon(fs ? 'collapse' : 'expand') + '</button>';
+	}
+	$('#hdr').innerHTML = h + '</div>';
+}
+function renderState() {
+	var st = S.status, ic, title, msg = '', extra = '';
+	if (st === 'error') {
+		ic = '<div class="state-ic err">' + icon('alert') + '</div>';
+		title = S.msg || 'Something went wrong';
+		msg = 'You can try again, or ask Docsie in the chat to rebuild the dataset.';
+		if (S.detail) extra += '<pre>' + esc(S.detail) + '</pre>';
+		if (S.source) extra += '<button class="btn" data-act="retry" data-k="retry">' + icon('reset', 'sm') + 'Try again</button>';
+		else if (S.initFailed) extra += '<button class="btn" data-act="reconnect" data-k="reconnect">' + icon('reset', 'sm') + 'Reconnect</button>';
+	} else if (st === 'pick') {
+		var pk = S.picker || {};
+		ic = '<div class="state-ic">' + icon('table') + '</div>';
+		title = 'Choose data to explore';
+		msg = 'Pick a CSV or Excel file or an AI Table from this workspace, or try the sample data.';
+		if (pk.loading) extra = '<span class="spin" aria-label="Loading your data"></span>';
+		else {
+			if (pk.error) extra += '<pre>' + esc(pk.error) + '</pre>';
+			var h = '';
+			if ((pk.tables || []).length) h += '<div class="pick-h">AI Tables</div>' + pk.tables.map((t, i) => '<button class="pick-i" data-act="pickTable" data-id="' + esc(t.table_id) + '" data-k="pt' + i + '">' + icon('table', 'sm') + '<span class="pick-t">' + esc(t.title) + '</span><span class="pick-m">' + esc(t.shelf || 'AI Table') + '</span></button>').join('');
+			if ((pk.files || []).length) h += '<div class="pick-h">Files</div>' + pk.files.map((f, i) => '<button class="pick-i" data-act="pickFile" data-id="' + esc(f.file_id) + '" data-k="pf' + i + '">' + icon('download', 'sm') + '<span class="pick-t">' + esc(f.title) + '</span><span class="pick-m">' + esc((f.created || '').slice(0, 10)) + '</span></button>').join('');
+			h += '<div class="pick-h">Try it</div><button class="pick-i" data-act="pickSample" data-k="psample">' + icon('spark', 'sm') + '<span class="pick-t">' + esc(pk.sample || 'Sample data') + '</span><span class="pick-m">Fictional sample</span></button>';
+			extra += '<div class="pick">' + h + '</div>';
+		}
+		if (S.dataset && S.view) extra += '<button class="btn" data-act="pickBack" data-k="pback">Back to ' + esc(S.dataset.title || 'the current data') + '</button>';
+	} else if (st === 'cancelled') {
+		ic = '<div class="state-ic">' + icon('info') + '</div>';
+		title = 'This request was cancelled';
+		msg = S.msg ? esc(S.msg) : 'Ask Docsie again when you\u2019re ready to explore the data.';
+	} else {
+		ic = '<div class="skel" aria-hidden="true"><i style="height:14px"></i><i style="height:26px"></i><i style="height:19px"></i><i style="height:32px"></i></div>';
+		if (st === 'loading') { title = 'Loading rows\u2026'; msg = S.dataset && toNum(S.dataset.row_count) != null ? 'Fetching ' + fmtInt(+S.dataset.row_count) + ' rows from Docsie.' : 'Fetching rows from Docsie.'; }
+		else if (st === 'waiting') { title = 'Preparing your data\u2026'; msg = 'Docsie is building the dataset for this view.'; }
+		else { title = 'Connecting to Docsie\u2026'; msg = 'Setting up the data explorer.'; }
+	}
+	$('#state').innerHTML = '<div class="state-c" role="' + (st === 'error' ? 'alert' : 'status') + '">' + ic + '<h2>' + esc(title) + '</h2><p>' + msg + '</p>' + extra + '</div>';
+}
+function glyph(f) { return '<span class="gl gl-' + f.type + '" aria-hidden="true">' + (f.type === 'number' ? '#' : f.type === 'date' ? icon('cal') : 'Abc') + '</span>'; }
+function typeWord(f) { return f.type === 'number' ? 'measure' : f.type === 'date' ? 'date dimension' : 'text dimension'; }
+function usedSet() { var v = S.view, s = new Set(v.rows.concat(v.columns, Object.keys(v.filters))); v.values.forEach((x) => { s.add(x.field); }); return s; }
+function renderFields() {
+	var el = $('#fields');
+	var h = '<div class="fp-h"><span class="ov">Fields</span><span class="n">' + S.fields.length + '</span><button class="btn sm icon ghost" data-act="toggleFields" data-k="fp-hide" aria-label="Hide the fields panel" title="Hide fields">' + icon('panel', 'sm') + '</button></div>';
+	if (S.fields.length > 12) h += '<div class="fp-s">' + icon('search', 'sm') + '<input class="input" type="search" id="fsearch" data-k="fsearch" placeholder="Search fields" aria-label="Search fields" value="' + esc(S.ui.search) + '"></div>';
+	h += '<div id="flist">' + fieldListHTML() + '</div>';
+	h += '<div class="fp-hint">Drag fields onto a shelf, or click one to add it. Drag a pill back here to remove it.</div>';
+	el.innerHTML = h;
+}
+function fieldListHTML() {
+	var q = S.ui.search.trim().toLowerCase(), used = usedSet();
+	var list = S.fields.filter((f) => !q || f.label.toLowerCase().indexOf(q) >= 0 || f.name.toLowerCase().indexOf(q) >= 0);
+	var item = (f) => {
+		return '<div class="fld' + (used.has(f.name) ? ' used' : '') + '" draggable="true" data-drag="field" data-field="' + esc(f.name) + '">' +
+			'<div class="fld-b" role="button" tabindex="0" data-act="addField" data-field="' + esc(f.name) + '" data-k="f:' + esc(f.name) + '" title="' + esc(f.label) + ' \u2014 click to add, or drag onto a shelf" aria-label="Add ' + esc(f.label) + ', ' + typeWord(f) + '">' + glyph(f) + '<span class="fld-t">' + esc(f.label) + '</span></div>' +
+			'<button class="fld-m" data-act="fieldMenu" data-field="' + esc(f.name) + '" data-k="fm:' + esc(f.name) + '" aria-haspopup="menu" aria-label="Choose a shelf for ' + esc(f.label) + '" title="Add to\u2026">' + icon('dots', 'sm') + '</button></div>';
+	};
+	var dims = list.filter((f) => f.kind === 'dim'), meas = list.filter((f) => f.kind === 'measure');
+	var h = '';
+	if (dims.length) h += '<div class="fp-g"><span class="ov">Dimensions</span><span class="mono" style="color:var(--muted)">' + dims.length + '</span></div>' + dims.map(item).join('');
+	if (meas.length) h += '<div class="fp-g"><span class="ov">Measures</span><span class="mono" style="color:var(--muted)">' + meas.length + '</span></div>' + meas.map(item).join('');
+	if (!list.length) h += '<div class="fp-e">No fields match \u201c' + esc(S.ui.search) + '\u201d.</div>';
+	return h;
+}
+function shelfItems(shelf) {
+	var v = S.view;
+	if (shelf === 'values') return v.values.map((x) => x.field);
+	if (shelf === 'filters') return Object.keys(v.filters);
+	return v[shelf];
+}
+function filterSummary(name) {
+	var f = S.byName.get(name), spec = S.view.filters[name];
+	if (spec == null) return f.label + ': all';
+	if (Array.isArray(spec)) {
+		if (!spec.length) return f.label + ': none';
+		var g = f.type === 'date' ? detectGrain(spec) : null;
+		var labs = spec.map((x) => x == null ? '(blank)' : (g ? dateLabel(x, g) : x));
+		if (labs.length <= 2) return f.label + ': ' + labs.join(', ');
+		var tot = distinctKeys(f, g || (f.type === 'date' ? 'day' : null)).length;
+		return f.label + ': ' + fmtInt(labs.length) + ' of ' + fmtInt(tot);
+	}
+	var fm = f.type === 'date' ? (x) => x : (x) => fmtCompact(x, f.currency ? 'currency' : 'number');
+	if (spec.min != null && spec.max != null) return f.label + ': ' + fm(spec.min) + '\u2013' + fm(spec.max);
+	if (spec.min != null) return f.label + ' \u2265 ' + fm(spec.min);
+	return f.label + ' \u2264 ' + fm(spec.max);
+}
+function pillHTML(shelf, idx, name) {
+	var f = S.byName.get(name), v = S.view, label = f.label, badge = '', cls = '', aria;
+	if (shelf === 'values') { badge = AGG_TAG[v.values[idx].agg]; cls = ' pv'; aria = f.label + ', ' + AGG_NAME[v.values[idx].agg] + ', on Values'; }
+	else if (shelf === 'filters') { cls = ' pf' + (v.filters[name] != null ? ' on' : ''); label = filterSummary(name); aria = 'Filter ' + label; }
+	else { if (f.type === 'date') badge = (v.date_grain[name] || 'month'); aria = f.label + (badge ? ' by ' + badge : '') + ', on ' + SHELF_NAME[shelf]; }
+	aria += '. Enter for options, Delete to remove, Alt plus arrow keys to move.';
+	return '<div class="pill' + cls + '" role="listitem" draggable="true" data-drag="pill" data-shelf="' + shelf + '" data-idx="' + idx + '" data-field="' + esc(name) + '">' +
+		'<div class="pl-b" role="button" tabindex="0" data-act="pillMenu" data-shelf="' + shelf + '" data-idx="' + idx + '" data-k="p:' + shelf + ':' + idx + '" aria-haspopup="' + (shelf === 'filters' ? 'dialog' : 'menu') + '" aria-label="' + esc(aria) + '" title="' + esc(label) + '">' +
+		(shelf === 'values' ? '<span class="pl-g">' + esc(badge) + '</span>' : shelf === 'filters' ? '' : glyph(f)) + '<span class="pl-t">' + esc(label) + '</span>' + (badge && shelf !== 'values' ? '<span class="pl-g">' + esc(badge) + '</span>' : '') + '</div>' +
+		'<button class="pl-x" data-act="pillRemove" data-shelf="' + shelf + '" data-idx="' + idx + '" data-k="px:' + shelf + ':' + idx + '" aria-label="Remove ' + esc(f.label) + ' from ' + SHELF_NAME[shelf] + '" title="Remove">' + icon('x', 'xs') + '</button></div>';
+}
+function renderShelves() {
+	var ph = {rows: 'Drop dimensions here', columns: 'Drop a dimension', values: 'Drop measures here', filters: 'Drop fields to filter'};
+	$('#shelves').innerHTML = SHELVES.map((s) => {
+		var items = shelfItems(s[0]);
+		var pills = items.map((n, i) => pillHTML(s[0], i, n)).join('');
+		return '<div class="shelf" data-shelf="' + s[0] + '"><div class="sh-l">' + s[1] + '</div><div class="sh-z" data-zone="' + s[0] + '" role="list" aria-label="' + s[1] + ' shelf">' + (pills || '<span class="sh-ph">' + ph[s[0]] + '</span>') + '</div></div>';
+	}).join('');
+}
+function sortLabel() { var s = S.view.sort; return (s.by === 'value' ? 'Value ' : 'Label ') + (s.dir === 'desc' ? '\u2193' : '\u2191'); }
+function renderToolbar() {
+	var v = S.view, nr = v.rows.length, h = '';
+	if (S.ui.fieldsHidden) h += '<button class="btn sm" data-act="toggleFields" data-k="fp-show" aria-label="Show the fields panel">' + icon('panel', 'sm') + 'Fields</button>';
+	var sec = CHARTS.slice(5).find((c) => c[0] === v.chart);
+	h += '<div class="seg" role="group" aria-label="Chart type">' + CHARTS.map((c, i) => '<button class="' + (v.chart === c[0] ? 'on' : '') + (i > 4 ? ' x2' : '') + '" data-act="chart" data-chart="' + c[0] + '" data-k="c:' + c[0] + '" aria-pressed="' + (v.chart === c[0]) + '" aria-label="' + c[1] + '" title="' + c[1] + '">' + icon(c[2], 'sm') + '<span class="lbl">' + c[1] + '</span></button>').join('') +
+		'<button class="mo' + (sec ? ' on' : '') + '" data-act="chartMore" data-k="c:more" aria-haspopup="menu" aria-label="More charts' + (sec ? ', ' + sec[1] + ' selected' : '') + '" title="More charts">' + icon(sec ? sec[2] : 'dots', 'sm') + (sec ? '<span class="lbl">' + sec[1] + '</span>' : '') + icon('down', 'xs') + '</button></div>';
+	var dis = nr ? '' : ' disabled';
+	h += '<button class="btn sm" data-act="sortMenu" data-k="sort" aria-haspopup="menu" aria-label="Sort rows, currently ' + esc(sortLabel()) + '" title="Sort the first row dimension"' + dis + '><span class="lbl">' + icon('sort', 'sm') + '</span>' + esc(sortLabel()) + icon('down', 'xs') + '</button>';
+	h += '<button class="btn sm" data-act="topMenu" data-k="top" aria-haspopup="menu" aria-label="Top N, currently ' + (v.top_n ? 'top ' + v.top_n : 'all') + '" title="Keep only the top N members of the first row dimension"' + dis + '>Top: ' + (v.top_n || 'All') + icon('down', 'xs') + '</button>';
+	if ((v.chart === 'table' || v.chart === 'heatmap') && nr > 1) h += '<button class="btn sm' + (v.subtotals ? ' on' : '') + '" data-act="subtotals" data-k="subt" aria-pressed="' + !!v.subtotals + '">Subtotals</button>';
+	h += '<span class="sp"></span>';
+	h += '<button class="btn sm ghost" data-act="swap" data-k="swap" aria-label="Swap rows and columns" title="Swap rows and columns"' + (nr || v.columns.length ? '' : ' disabled') + '>' + icon('swap', 'sm') + '<span class="lbl">Swap</span></button>';
+	h += '<button class="btn sm ghost" data-act="reset" data-k="reset" aria-label="Reset to the suggested view" title="Reset to the suggested view">' + icon('reset', 'sm') + '<span class="lbl">Reset</span></button>';
+	$('#toolbar').innerHTML = h;
+}
+function renderKpis() {
+	var res = S.res, h = '';
+	res.vs.slice(0, 4).forEach((v, k) => {
+		var x = res.grand[k];
+		h += '<div class="kpi" title="' + esc(v.label + ': ' + fmtFull(x, v.fmt)) + '"><div class="kpi-l">' + esc(v.label) + '</div><div class="kpi-v">' + esc(fmtKpi(x, v.fmt)) + '</div></div>';
+	});
+	if (res.nv > 4) h += '<div class="kpi more">+' + (res.nv - 4) + ' more</div>';
+	var all = S.data.length;
+	h += '<div class="kpi rows" title="Rows after filters' + (res.topInfo ? ' and Top N' : '') + '"><div class="kpi-l">Rows</div><div class="kpi-v">' + fmtInt(res.n) + (res.n < all ? '<small>/ ' + fmtInt(all) + '</small>' : '') + '</div></div>';
+	$('#kpis').innerHTML = h;
+}
+function emptyViz(ic, title, msg, btn) {
+	return '<div class="vz-e"><div class="state-ic">' + icon(ic) + '</div><h3>' + esc(title) + '</h3><p>' + msg + '</p>' + (btn || '') + '</div>';
+}
+function dimsText(res) {
+	var t = res.rd.map((d) => d.title).join(' \u00b7 ');
+	if (res.nc) t += (t ? ' and ' : '') + res.cd.map((d) => d.title).join(' \u00b7 ');
+	return t;
+}
+function viewTitle(res, onlyFirst) {
+	var vals = onlyFirst ? res.vs.slice(0, 1) : res.vs;
+	var vt = vals.map((v) => v.label).join(', '), dt = dimsText(res);
+	return vt + (dt ? ' by ' + dt : '');
+}
+function commonNotes(res) {
+	var n = [];
+	if (res.topInfo) n.push('Top ' + res.topInfo.n + ' of ' + fmtInt(res.topInfo.of) + ' ' + res.rd[0].title + ' values, by ' + res.vs[0].label);
+	if (res.colsTotal > MAX_COLS) n.push('Showing the first ' + MAX_COLS + ' of ' + fmtInt(res.colsTotal) + ' column members');
+	return n;
+}
+function notesHTML(notes, extra) {
+	if (!notes.length && !extra) return '';
+	return '<div class="vz-n">' + notes.map((t) => '<span>' + icon('info', 'xs') + esc(t) + '</span>').join('') + (extra || '') + '</div>';
+}
+function renderViz() {
+	var el = $('#viz'), v = S.view, res = S.res;
+	hideTip(); S.geo = null; S.chart = null; S.chartSig = ''; S.active = -1;
+	el.dataset.computeMs = res.ms.toFixed(1);
+	if (!v.values.length && !v.rows.length && !v.columns.length) { el.innerHTML = emptyViz('bar', 'Start with a field', 'Drag a dimension to Rows and a measure to Values, or click a field on the left.', '<button class="btn sm" data-act="reset" data-k="ev-reset">Use the suggested view</button>'); return; }
+	if (!res.nv) { el.innerHTML = emptyViz('sigma', 'Add a measure', 'Drop a measure on Values to see numbers, or count the rows.', '<button class="btn sm" data-act="countRows" data-k="ev-count">Count rows</button>'); return; }
+	if (res.n === 0) { el.innerHTML = emptyViz('filter', 'No rows match these filters', 'Loosen or clear the filters to see data again.', '<button class="btn sm" data-act="clearFilters" data-k="ev-clear">Clear filters</button>'); return; }
+	if (v.chart === 'table' || v.chart === 'heatmap') {
+		var t = tableHTML(res, v.chart === 'heatmap');
+		el.innerHTML = '<div class="vz-h"><div class="vz-t" title="' + esc(viewTitle(res)) + '">' + esc(viewTitle(res)) + '</div>' + t.legend + '</div>' + notesHTML(t.notes) + '<div class="vz-b" id="vzBody" tabindex="0" data-k="vzt" role="region" aria-label="' + esc(viewTitle(res)) + ' table">' + t.html + '</div>';
+		shade();
+		return;
+	}
+	if (!res.nr && !res.nc && v.chart !== 'scatter') { el.innerHTML = emptyViz('bar', 'Add a dimension to chart', 'The total is in the summary above. Drop a dimension on Rows to break it down, or switch to Table.', '<button class="btn sm" data-act="chart" data-chart="table" data-k="ev-table" aria-label="Table">' + icon('table', 'sm') + 'Show as table</button>'); return; }
+	var m = chartModel(res, v);
+	if (m.hint) { el.innerHTML = hintHTML(m, res); return; }
+	S.chart = m;
+	var two = v.chart === 'scatter' || v.chart === 'combo', notes = commonNotes(res).concat(m.notes), extra = '';
+	if (res.nv > 1 && !two) extra = '<span>' + icon('info', 'xs') + 'Chart shows ' + esc(m.v.label) + ', the first of ' + res.nv + ' values<button class="lnk" data-act="chartValueMenu" data-k="cvm" aria-haspopup="menu">Change</button></span>';
+	var title = v.chart === 'scatter' ? m.yl + ' vs ' + m.xl + (m.sl ? ', sized by ' + m.sl : '') + (res.nr ? ' by ' + res.rd.map((d) => d.title).join(' \u00b7 ') : '') : v.chart === 'combo' ? res.vs[0].label + ' and ' + res.vs[1].label + ' by ' + m.catTitle : viewTitle(res, true);
+	var kind = CHARTS.find((c) => c[0] === m.type)[1] + ' chart';
+	el.innerHTML = '<div class="vz-h"><div class="vz-t" title="' + esc(title) + '">' + esc(title) + '</div>' + legendHTML(m) + '</div>' + notesHTML(notes, extra) +
+		'<div class="vz-b ch" id="vzBody" tabindex="0" role="figure" data-k="vzb" aria-label="' + esc(kind + ': ' + title + '. Use the arrow keys to read values. The Table view lists every value.') + '"></div>';
+	drawChart();
+}
+function legendHTML(m) {
+	var L = m.legend || m.series;
+	if (L.length < 2) return '';
+	return '<div class="legend" aria-label="Legend">' + L.map((s) => '<span class="lg"><i class="' + ((s.kind ? s.kind === 'line' : m.type === 'line') ? 'ln' : m.type === 'scatter' ? 'dt' : '') + '" style="background:' + s.color + '"></i><span title="' + esc(s.name) + '">' + esc(s.name) + '</span></span>').join('') + '</div>';
+}
+function heatColor(t) {
+	var st = HEAT[theme()]; t = clamp(isFinite(t) ? t : 0, 0, 1) * (st.length - 1);
+	var i = Math.min(st.length - 2, Math.floor(t)), u = t - i, a = hexRGB(st[i]), b = hexRGB(st[i + 1]);
+	return 'rgb(' + a.map((x, q) => Math.round(x + (b[q] - x) * u)).join(',') + ')';
+}
+function hexRGB(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+function tableHTML(res, heat) {
+	var g = buildGrid(res, MAX_TABLE_ROWS), H = headerModel(res), nr = res.nr, nv = res.nv, nLab = Math.max(1, nr), vs = res.vs;
+	var scale = null, legend = '';
+	if (heat) {
+		scale = vs.map(() => { return {lo: Infinity, hi: -Infinity}; });
+		g.body.forEach((r) => { if (r.kind !== 'row') return; r.vals.forEach((x, ci) => { var l = g.leaf[ci]; if (l.total || x == null) return; var s = scale[l.k]; if (x < s.lo) s.lo = x; if (x > s.hi) s.hi = x; }); });
+		var s0 = scale[0];
+		if (s0.lo !== Infinity) legend = '<span class="heat-lg" aria-label="Color scale for ' + esc(vs[0].label) + '">' + esc(fmtCompact(s0.lo, vs[0].fmt)) + '<b style="background:linear-gradient(90deg,' + HEAT[theme()].join(',') + ')"></b>' + esc(fmtCompact(s0.hi, vs[0].fmt)) + (nv > 1 ? ' \u00b7 per value' : '') + '</span>';
+	}
+	var dark = theme() === 'dark';
+	var h = '<table class="pv' + (heat ? ' heat' : '') + '"><thead>';
+	H.forEach((row, L) => {
+		h += '<tr>';
+		row.forEach((c) => {
+			h += '<th scope="col"' + (c.colspan > 1 ? ' colspan="' + c.colspan + '"' : '') + (c.rowspan > 1 ? ' rowspan="' + c.rowspan + '"' : '') + ' class="' + c.cls + '" style="top:' + (L * HEAD_H) + 'px" title="' + esc(c.t) + '">' + esc(c.t) + '</th>';
+		});
+		h += '</tr>';
+	});
+	h += '</thead><tbody>';
+	var prev = [];
+	var cellsHTML = (vals, isRow) => {
+		var o = '';
+		vals.forEach((x, ci) => {
+			var l = g.leaf[ci], vsp = vs[l.k], cls = 'n' + (l.total ? ' tc' : '') + (x == null ? ' nil' : ''), st = '';
+			if (heat && isRow && !l.total && x != null) {
+				var sc = scale[l.k], t = sc.hi > sc.lo ? (x - sc.lo) / (sc.hi - sc.lo) : .5;
+				st = ' style="background:' + heatColor(t) + ';color:' + (dark ? (t > .62 ? '#1D1915' : 'var(--ink)') : (t > .55 ? '#FFFFFF' : 'var(--ink)')) + '"';
+				cls += ' hc';
+			}
+			o += '<td class="' + cls + '"' + st + '>' + esc(fmtFull(x, vsp.fmt)) + '</td>';
+		});
+		return o;
+	};
+	g.body.forEach((r) => {
+		if (r.kind === 'row') {
+			h += '<tr>';
+			var same = true;
+			for (var j = 0; j < nLab; j++) {
+				var lab = nr ? r.labels[j] : 'All rows';
+				var rep = same && nr > 1 && j < nr - 1 && prev[j] === r.parts[j];
+				if (!rep) same = false;
+				h += '<th scope="row" class="rl' + (j === 0 ? ' s0' : '') + '"' + (rep ? '' : ' title="' + esc(lab) + '"') + '>' + (rep ? '' : esc(lab)) + '</th>';
+			}
+			h += cellsHTML(r.vals, true) + '</tr>';
+			prev = r.parts || [];
+		} else {
+			var L = r.level;
+			h += '<tr class="sub">';
+			for (var q = 0; q < L - 1; q++) h += '<th class="rl' + (q === 0 ? ' s0' : '') + '"></th>';
+			var lbl = r.labels[L - 1] + ' total';
+			h += '<th scope="row" class="rl' + (L - 1 === 0 ? ' s0' : '') + '" colspan="' + (nLab - (L - 1)) + '" title="' + esc(lbl) + '">' + esc(lbl) + '</th>' + cellsHTML(r.vals, false) + '</tr>';
+			prev = prev.slice(0, L - 1);
+		}
+	});
+	if (g.total) h += '<tr class="gt"><th scope="row" class="rl s0" colspan="' + nLab + '">Grand total</th>' + cellsHTML(g.total.vals, false) + '</tr>';
+	h += '</tbody></table>';
+	var notes = commonNotes(res);
+	if (g.truncated) notes.push('Showing the first ' + fmtInt(MAX_TABLE_ROWS) + ' of ' + fmtInt(g.rowCount) + ' rows (exports include up to ' + fmtInt(MAX_EXPORT_ROWS) + ')');
+	return {html: h, legend: legend, notes: notes};
+}
+
+/* ================= charts (inline SVG) ================= */
+function niceTicks(lo, hi, count) {
+	if (!isFinite(lo) || !isFinite(hi)) { lo = 0; hi = 1; }
+	if (lo === hi) { if (lo === 0) hi = 1; else if (lo > 0) lo = 0; else hi = 0; }
+	var step0 = (hi - lo) / Math.max(1, count), mag = Math.pow(10, Math.floor(Math.log10(step0))), err = step0 / mag;
+	var step = (err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1) * mag;
+	var t0 = Math.floor(lo / step + 1e-9) * step, t1 = Math.ceil(hi / step - 1e-9) * step, ticks = [];
+	for (var t = t0; t <= t1 + step * 1e-6; t += step) ticks.push(+t.toPrecision(12));
+	return {lo: t0, hi: t1, ticks: ticks};
+}
+function barPath(x, y, w, h, orient, neg, r) {
+	r = Math.min(r == null ? 4 : r, w / 2, h / 2);
+	x = f1(x); y = f1(y); w = f1(w); h = f1(h);
+	if (r < 0.6) return 'M' + x + ',' + y + 'h' + w + 'v' + h + 'h' + (-w) + 'z';
+	r = f1(r);
+	if (orient === 'v') {
+		if (!neg) return 'M' + x + ',' + (y + h) + 'V' + (y + r) + 'Q' + x + ',' + y + ' ' + (x + r) + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h) + 'Z';
+		return 'M' + x + ',' + y + 'V' + (y + h - r) + 'Q' + x + ',' + (y + h) + ' ' + (x + r) + ',' + (y + h) + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + (y + h) + ' ' + (x + w) + ',' + (y + h - r) + 'V' + y + 'Z';
+	}
+	if (!neg) return 'M' + x + ',' + y + 'H' + (x + w - r) + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h - r) + 'Q' + (x + w) + ',' + (y + h) + ' ' + (x + w - r) + ',' + (y + h) + 'H' + x + 'Z';
+	return 'M' + (x + w) + ',' + y + 'H' + (x + r) + 'Q' + x + ',' + y + ' ' + x + ',' + (y + r) + 'V' + (y + h - r) + 'Q' + x + ',' + (y + h) + ' ' + (x + r) + ',' + (y + h) + 'H' + (x + w) + 'Z';
+}
+function txt(x, y, s, cls, anchor, extra) { return '<text x="' + f1(x) + '" y="' + f1(y) + '"' + (cls ? ' class="' + cls + '"' : '') + (anchor ? ' text-anchor="' + anchor + '"' : '') + (extra || '') + '>' + esc(s) + '</text>'; }
+var CHART_FN = {line: lineChart, area: lineChart, stacked_area: lineChart, donut: donutChart, scatter: scatterChart, combo: comboChart, treemap: treemapChart};
+function drawChart() {
+	var body = $('#vzBody'), m = S.chart;
+	if (!body || !m) return;
+	var cs = getComputedStyle(body), padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0), padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+	var W = Math.floor(body.clientWidth - padX), H = Math.floor(body.clientHeight - padY), fn = CHART_FN[m.type] || barChart;
+	if (W < 80 || H < 80) return;
+	var sig = [W, H, theme(), S.resSig, m.type].join('|');
+	if (body.querySelector('svg') && (sig === S.chartSig || S.chartSig === [W - (body.offsetWidth - body.clientWidth), H, theme(), S.resSig, m.type].join('|'))) return;
+	S.chartSig = sig;
+	var g = fn(m, W, H);
+	body.innerHTML = g.svg;
+	if (body.clientWidth - padX < W - 1) { W = Math.floor(body.clientWidth - padX); g = fn(m, W, H); body.innerHTML = g.svg; S.chartSig = [W, H, theme(), S.resSig, m.type].join('|'); }
+	S.geo = g; S.active = -1;
+	bindChart(body);
+}
+function valueExtent(m, stacked) {
+	var lo = 0, hi = 0, tot = [], n = m.cats.length;
+	for (var i = 0; i < n; i++) {
+		if (stacked) { var p = 0, q = 0, any = false; m.series.forEach((s) => { var x = s.values[i]; if (x == null) return; any = true; if (x > 0) p += x; else q += x; }); hi = Math.max(hi, p); lo = Math.min(lo, q); tot.push(any ? p + q : null); }
+		else m.series.forEach((s) => { var x = s.values[i]; if (x == null) return; if (x > hi) hi = x; if (x < lo) lo = x; });
+	}
+	return {lo: lo, hi: hi, tot: tot};
+}
+// shared axis pieces
+function yTicks(lo, hi, ph, fmt) { var tk = niceTicks(lo, hi, clamp(Math.floor(ph / 46), 2, 8)), w = 0; tk.ticks.forEach((t) => { w = Math.max(w, tw(fmtCompact(t, fmt), 11)); }); tk.w = Math.ceil(w); return tk; }
+function hGrid(o, tk, sy, x1, x2, fmt, lx, anchor) { tk.ticks.forEach((t) => { var y = f1(sy(t)); o.push('<line class="gr" x1="' + f1(x1) + '" x2="' + f1(x2) + '" y1="' + y + '" y2="' + y + '"/>'); if (fmt) o.push(txt(lx, +y + 4, fmtCompact(t, fmt), '', anchor)); }); }
+function hRule(o, x1, x2, y) { o.push('<line class="bl" x1="' + f1(x1) + '" x2="' + f1(x2) + '" y1="' + f1(y) + '" y2="' + f1(y) + '"/>'); }
+function catLabels(o, cats, xs, slot, y, left, W) {
+	var maxLW = 0; cats.forEach((c) => { maxLW = Math.max(maxLW, tw(c, 11)); });
+	var step = Math.max(1, Math.ceil((maxLW + 12) / slot));
+	for (var i = 0; i < cats.length; i += step) { var lt = fitText(cats[i], slot * step - 6, 11), lw = tw(lt, 11), lx = xs(i), la = 'middle'; if (lx + lw / 2 > W) { lx = W; la = 'end'; } else if (lx - lw / 2 < left - 8) { lx = left - 8; la = 'start'; } o.push(txt(lx, y, lt, 'cl', la)); }
+}
+function seriesTip(m, i, hot) {
+	var rows = m.series.map((s, si) => ({c: s.color, v: fmtFull(s.values[i], s.fmt || m.v.fmt), n: s.name, hot: si === hot})), t = 0, any = false;
+	if (/^stacked/.test(m.type) && m.series.length > 1 && m.v.additive) { m.series.forEach((s) => { if (s.values[i] != null) { t += s.values[i]; any = true; } }); if (any) rows.push({v: fmtFull(t, m.v.fmt), n: 'Total', tot: true}); }
+	return {h: m.cats[i], rows: rows};
+}
+function onFill(hex) { var l = hexRGB(hex).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2] > 0.3 ? '#1D1915' : '#FFFFFF'; }
+function otherColor() { return theme() === 'dark' ? '#7E7468' : '#958B7E'; }
+function barChart(m, W, H) {
+	var stacked = m.type === 'stacked_bar', SR = m.series, ns = SR.length, n = m.cats.length, fmt = m.v.fmt;
+	var ex = valueExtent(m, stacked), lo = ex.lo, hi = ex.hi;
+	var maxLW = 0; m.cats.forEach((c) => { maxLW = Math.max(maxLW, tw(c, 11)); });
+	var horiz = n > 12 || maxLW > (W - 70) / Math.max(1, n) - 10 || (W < 460 && n > 6);
+	var o = [], i, tipVals = stacked ? ex.tot : (ns === 1 ? SR[0].values : null), tip = (q, hot) => seriesTip(m, q, hot);
+	var ext = (q) => { var mx = -Infinity; SR.forEach((s) => { var x = s.values[q]; if (x != null) mx = Math.max(mx, stacked ? sumPos(SR, q) : x); }); return isFinite(mx) ? Math.max(0, mx) : 0; };
+	if (horiz) {
+		var top = 24, bottom = 40, labelW = Math.min(Math.ceil(maxLW), Math.floor(W * 0.34)), left = labelW + 18, showV = !!tipVals && n <= 40, valW = 0;
+		if (showV) tipVals.forEach((x) => { if (x != null) valW = Math.max(valW, tw(fmtCompact(x, fmt), 10.5, 600)); });
+		var pw = Math.max(40, W - left - Math.max(16, showV ? Math.ceil(valW) + 12 : 16)), rowH = clamp((H - top - bottom) / n, 20, 44), ph = rowH * n, SH = Math.max(H, Math.ceil(top + ph + bottom));
+		var tk = niceTicks(lo, hi, clamp(Math.floor(pw / 90), 2, 8)), sx = (v) => left + (v - tk.lo) / (tk.hi - tk.lo) * pw, x0 = f1(sx(0));
+		o.push('<rect class="hl" x="0" y="' + top + '" width="' + W + '" height="' + f1(rowH) + '" opacity="0"/>');
+		tk.ticks.forEach((t) => { var x = f1(sx(t)); o.push('<line class="gr" x1="' + x + '" x2="' + x + '" y1="' + top + '" y2="' + f1(top + ph) + '"/>'); o.push(txt(x, top + ph + 15, fmtCompact(t, fmt), '', 'middle')); });
+		o.push('<line class="bl" x1="' + x0 + '" x2="' + x0 + '" y1="' + top + '" y2="' + f1(top + ph) + '"/>');
+		o.push(txt(left - 10, 14, m.catTitle, 'at', 'end'), txt(left + pw / 2, top + ph + 33, m.v.label, 'at', 'middle'));
+		var band = rowH * (ns > 1 && !stacked ? 0.8 : 0.68), th = stacked || ns === 1 ? Math.min(24, band) : Math.max(2, Math.min(24, (band - (ns - 1) * 2) / ns));
+		for (i = 0; i < n; i++) {
+			var cy = top + rowH * i + rowH / 2;
+			o.push(txt(left - 10, cy + 4, fitText(m.cats[i], labelW, 11), 'cl', 'end'));
+			barMarks(o, SR, i, cy, th, sx, true, stacked);
+			if (showV && tipVals[i] != null) o.push(txt((stacked ? sx(sumPos(SR, i)) : sx(Math.max(0, tipVals[i]))) + 6, cy + 4, fmtCompact(tipVals[i], fmt), 'vl', 'start'));
+		}
+		return {svg: svgWrap(W, SH, o), orient: 'h', n: n, step: rowH, px0: left, px1: left + pw, py0: top, py1: top + ph, tip: tip, anchor: (q) => ({x: Math.min(sx(ext(q)) + 8, W - 20), y: top + rowH * q + rowH / 2})};
+	}
+	var topV = tipVals && n <= 12 ? 32 : 24, phV = H - topV - 46, tkV = yTicks(lo, hi, phV, fmt), leftV = tkV.w + 14, pwV = W - leftV - 12;
+	var sy = (v) => topV + (tkV.hi - v) / (tkV.hi - tkV.lo) * phV, slot = pwV / n, xs = (q) => leftV + slot * q + slot / 2;
+	o.push('<rect class="hl" x="' + leftV + '" y="' + (topV - 6) + '" width="' + f1(slot) + '" height="' + f1(phV + 6) + '" opacity="0"/>');
+	hGrid(o, tkV, sy, leftV, leftV + pwV, fmt, leftV - 8, 'end');
+	hRule(o, leftV, leftV + pwV, sy(0));
+	o.push(txt(0, 13, m.v.label, 'at', 'start'), txt(leftV + pwV / 2, H - 6, m.catTitle, 'at', 'middle'));
+	catLabels(o, m.cats, xs, slot, topV + phV + 16, leftV, W);
+	var groupW = slot * (ns > 1 && !stacked ? 0.8 : 0.62), bw = stacked || ns === 1 ? Math.min(24, groupW) : Math.max(1.5, Math.min(24, (groupW - (ns - 1) * 2) / ns));
+	for (i = 0; i < n; i++) {
+		barMarks(o, SR, i, xs(i), bw, sy, false, stacked);
+		if (tipVals && n <= 12 && tipVals[i] != null) {
+			var tv = tipVals[i], lab = fmtCompact(tv, fmt);
+			if (tw(lab, 10.5, 600) <= slot - 2) o.push(txt(xs(i), stacked ? sy(sumPos(SR, i)) - 6 : (tv >= 0 ? sy(tv) - 6 : sy(tv) + 14), lab, 'vl', 'middle'));
+		}
+	}
+	return {svg: svgWrap(W, H, o), orient: 'v', n: n, step: slot, px0: leftV, px1: leftV + pwV, py0: topV, py1: topV + phV, tip: tip, anchor: (q) => ({x: xs(q) + 12, y: sy(ext(q))})};
+}
+// one category's marks; c = centre on the category axis, sv = value scale, h = horizontal bars
+function barMarks(o, SR, i, c, th, sv, h, stacked) {
+	var ns = SR.length, gw = ns * th + (ns - 1) * 2, pos = 0, neg = 0, lastP = -1, lastN = -1, k;
+	if (stacked) for (k = 0; k < ns; k++) { var z = SR[k].values[i]; if (z > 0) lastP = k; else if (z < 0) lastN = k; }
+	for (k = 0; k < ns; k++) {
+		var v = SR[k].values[i], a0 = 0, outer = true;
+		if (v == null || (stacked && v === 0)) continue;
+		if (stacked) { a0 = v > 0 ? pos : neg; if (v > 0) pos += v; else neg += v; outer = k === (v > 0 ? lastP : lastN); }
+		// 2px surface gap between stacked segments: pull each inner joint back 1px
+		var p0 = sv(a0), p1 = sv(a0 + v), d = p1 > p0 ? 1 : -1;
+		if (Math.abs(p1 - p0) > 3) { if (a0 !== 0) p0 += d; if (!outer) p1 -= d; }
+		var lo = Math.min(p0, p1), len = Math.max(0.5, Math.abs(p1 - p0)), cs = stacked || ns === 1 ? c - th / 2 : c - gw / 2 + k * (th + 2), ng = h ? p1 < p0 : p1 > p0, r = outer ? 4 : 0;
+		o.push('<path class="bar" data-si="' + k + '" fill="' + SR[k].color + '" d="' + (h ? barPath(lo, cs, len, th, 'h', ng, r) : barPath(cs, lo, th, len, 'v', ng, r)) + '"/>');
+	}
+}
+function sumPos(SR, i) { var p = 0; SR.forEach((s) => { var x = s.values[i]; if (x != null && x > 0) p += x; }); return p; }
+function svgWrap(W, H, parts) { return '<svg class="chart" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true" focusable="false">' + parts.join('') + '</svg>'; }
+function polyline(pts) { return pts.map((p, q) => (q ? 'L' : 'M') + f1(p[0]) + ',' + f1(p[1])).join(''); }
+// line, area and stacked area
+function lineChart(m, W, H) {
+	var SR = m.series, ns = SR.length, n = m.cats.length, fmt = m.v.fmt, stk = m.type === 'stacked_area', area = stk || m.type === 'area', vals = SR.map((s) => s.values), lo = Infinity, hi = -Infinity;
+	if (stk) { var acc = new Array(n).fill(0); vals = SR.map((s) => s.values.map((x, q) => (acc[q] += x || 0))); }
+	vals.forEach((a) => { a.forEach((x) => { if (x != null) { if (x < lo) lo = x; if (x > hi) hi = x; } }); });
+	if (lo === Infinity) { lo = 0; hi = 1; }
+	if (area || (lo >= 0 && lo < hi * 0.5)) lo = Math.min(lo, 0);
+	if (area || (hi <= 0 && hi > lo * 0.5)) hi = Math.max(hi, 0);
+	if (lo === hi) { lo = lo > 0 ? 0 : lo - 1; hi = hi > 0 ? hi : hi + 1; }
+	var top = 24, ph = H - top - 46, tk = yTicks(lo, hi, ph, fmt), left = tk.w + 14, sy = (v) => top + (tk.hi - v) / (tk.hi - tk.lo) * ph;
+	var ends = [];
+	if (ns <= 4 && !stk) SR.forEach((s, si) => { for (var q = n - 1; q >= 0; q--) if (s.values[q] != null) { ends.push({q: q, y: sy(s.values[q]), t: fmtCompact(s.values[q], fmt)}); break; } });
+	ends.sort((a, b) => a.y - b.y);
+	if (ends.some((e, q) => (q > 0 && e.y - ends[q - 1].y < 13) || e.q < n - 1)) ends = [];
+	var endW = 0; ends.forEach((e) => { endW = Math.max(endW, tw(e.t, 10.5, 600)); });
+	var pw = W - left - (ends.length ? Math.ceil(endW) + 14 : 14), slot = pw / n, xs = (q) => left + slot * q + slot / 2, o = [];
+	var base = sy(tk.lo <= 0 && tk.hi >= 0 ? 0 : tk.lo);
+	hGrid(o, tk, sy, left, left + pw, fmt, left - 8, 'end');
+	hRule(o, left, left + pw, base);
+	o.push(txt(0, 13, m.v.label, 'at', 'start'), txt(left + pw / 2, H - 6, m.catTitle, 'at', 'middle'));
+	catLabels(o, m.cats, xs, slot, top + ph + 16, left, W);
+	o.push('<line class="xh" x1="0" x2="0" y1="' + top + '" y2="' + f1(top + ph) + '" opacity="0"/>');
+	var ys = vals.map((a) => a.map((x) => x == null ? null : sy(x)));
+	if (stk) ys.forEach((a, si) => {
+		var up = a.map((y, q) => [xs(q), y]), dn = (si ? ys[si - 1] : a.map(() => base)).map((y, q) => [xs(q), y]).reverse();
+		o.push('<path class="bar sa" data-si="' + si + '" fill="' + SR[si].color + '" fill-opacity=".88" d="' + polyline(up.concat(dn)) + 'Z"/>');
+	});
+	else if (area || ns === 1) ys.forEach((a, si) => {
+		var seg = [];
+		a.concat([null]).forEach((y, q) => {
+			if (y != null) { seg.push([xs(q), y]); return; }
+			if (seg.length > 1) o.push('<path fill="' + SR[si].color + '" fill-opacity="' + (area && ns > 1 ? '.1' : '.12') + '" d="' + polyline(seg) + 'L' + f1(seg[seg.length - 1][0]) + ',' + f1(base) + 'L' + f1(seg[0][0]) + ',' + f1(base) + 'Z"/>');
+			seg = [];
+		});
+	});
+	var markers = !stk && n <= (ns > 2 ? 12 : 24);
+	if (!stk) SR.forEach((s, si) => {
+		var d = '', pen = false;
+		ys[si].forEach((y, q) => { if (y == null) { pen = false; return; } d += (pen ? 'L' : 'M') + f1(xs(q)) + ',' + f1(y); pen = true; });
+		o.push('<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+		ys[si].forEach((y, q) => {
+			if (y != null && (markers || ((q === 0 || ys[si][q - 1] == null) && (q === n - 1 || ys[si][q + 1] == null)))) o.push('<circle class="ring" cx="' + f1(xs(q)) + '" cy="' + f1(y) + '" r="3.5" fill="' + s.color + '"/>');
+		});
+	});
+	ends.forEach((e) => { o.push(txt(xs(e.q) + 8, e.y + 4, e.t, 'vl', 'start')); });
+	o.push('<g class="hd">' + SR.map((s) => '<circle class="ring" r="4.5" cx="0" cy="0" fill="' + s.color + '" opacity="0"/>').join('') + '</g>');
+	return {svg: svgWrap(W, H, o), orient: 'v', line: true, n: n, step: slot, px0: left, px1: left + pw, py0: top, py1: top + ph, ys: ys, xs: xs, tip: (q, hot) => seriesTip(m, q, hot),
+		anchor: (q) => { var mn = Infinity; ys.forEach((a) => { if (a[q] != null) mn = Math.min(mn, a[q]); }); return {x: xs(q) + 10, y: isFinite(mn) ? mn : top + ph / 2}; }};
+}
+// bars for the first value (left axis) + a line for the second (right axis)
+function comboChart(m, W, H) {
+	var b = m.series[0], l = m.series[1], n = m.cats.length, top = 30, ph = H - top - 46, o = [];
+	var ext = (a, z) => { var lo = Infinity, hi = -Infinity; a.forEach((x) => { if (x != null) { lo = Math.min(lo, x); hi = Math.max(hi, x); } }); if (lo === Infinity) { lo = 0; hi = 1; } if (z || (lo >= 0 && lo < hi * 0.5)) lo = Math.min(lo, 0); if (z) hi = Math.max(hi, 0); return [lo, hi]; };
+	var eb = ext(b.values, true), el = ext(l.values, false), tkL = yTicks(eb[0], eb[1], ph, b.fmt), tkR = yTicks(el[0], el[1], ph, l.fmt);
+	var left = tkL.w + 14, pw = W - left - tkR.w - 14, slot = pw / n, xs = (q) => left + slot * q + slot / 2;
+	var syL = (v) => top + (tkL.hi - v) / (tkL.hi - tkL.lo) * ph, syR = (v) => top + (tkR.hi - v) / (tkR.hi - tkR.lo) * ph;
+	o.push('<rect class="hl" x="' + left + '" y="' + (top - 6) + '" width="' + f1(slot) + '" height="' + f1(ph + 6) + '" opacity="0"/>');
+	hGrid(o, tkL, syL, left, left + pw, b.fmt, left - 8, 'end');
+	tkR.ticks.forEach((t) => { o.push(txt(left + pw + 8, syR(t) + 4, fmtCompact(t, l.fmt), '', 'start')); });
+	hRule(o, left, left + pw, syL(0));
+	var tl = fitText(b.name, W / 2 - 24, 11, 600), tr = fitText(l.name, W / 2 - 30, 11, 600), trw = tw(tr, 11, 600);
+	o.push('<rect x="0" y="4" width="10" height="10" rx="2" fill="' + b.color + '"/>', txt(15, 13, tl, 'at', 'start'));
+	o.push('<line x1="' + f1(W - trw - 21) + '" x2="' + f1(W - trw - 7) + '" y1="9" y2="9" stroke="' + l.color + '" stroke-width="2.5" stroke-linecap="round"/>', txt(W, 13, tr, 'at', 'end'));
+	o.push(txt(left + pw / 2, H - 6, m.catTitle, 'at', 'middle'));
+	catLabels(o, m.cats, xs, slot, top + ph + 16, left, W);
+	for (var i = 0; i < n; i++) barMarks(o, [b], i, xs(i), Math.min(24, slot * 0.62), syL, false, false);
+	var d = '', pen = false;
+	l.values.forEach((y, q) => { if (y == null) { pen = false; return; } d += (pen ? 'L' : 'M') + f1(xs(q)) + ',' + f1(syR(y)); pen = true; });
+	o.push('<path d="' + d + '" fill="none" stroke="' + l.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+	if (n <= 24) l.values.forEach((y, q) => { if (y != null) o.push('<circle class="ring" cx="' + f1(xs(q)) + '" cy="' + f1(syR(y)) + '" r="3.5" fill="' + l.color + '"/>'); });
+	return {svg: svgWrap(W, H, o), orient: 'v', n: n, step: slot, px0: left, px1: left + pw, py0: top, py1: top + ph, tip: (q, hot) => seriesTip(m, q, hot),
+		anchor: (q) => ({x: xs(q) + 12, y: Math.min(syL(Math.max(0, b.values[q] || 0)), l.values[q] == null ? Infinity : syR(l.values[q]))})};
+}
+function arcPath(cx, cy, R, r, a0, a1) {
+	if (a1 - a0 > 6.283) a1 = a0 + 6.2831;
+	var la = a1 - a0 > Math.PI ? 1 : 0, p = (rad, a) => f1(cx + Math.cos(a) * rad) + ',' + f1(cy + Math.sin(a) * rad);
+	return 'M' + p(R, a0) + 'A' + f1(R) + ',' + f1(R) + ' 0 ' + la + ' 1 ' + p(R, a1) + 'L' + p(r, a1) + 'A' + f1(r) + ',' + f1(r) + ' 0 ' + la + ' 0 ' + p(r, a0) + 'Z';
+}
+function donutChart(m, W, H) {
+	var it = m.items, tot = m.total, o = [], wide = W >= 420, legW = wide ? Math.min(260, Math.floor(W * 0.45)) : 0, rowH = 22;
+	var legH = it.length * rowH, ringH = wide ? H : Math.max(140, H - legH - 12), side = wide ? W - legW - 40 : W;
+	var R = Math.max(40, Math.min(ringH - 16, side - 8, 460) / 2), r0 = R * 0.6, x0 = wide ? Math.max(0, (W - 2 * R - 40 - legW) / 2) : 0, cx = wide ? x0 + R : W / 2, cy = ringH / 2, a = -Math.PI / 2, SH = wide ? H : ringH + legH + 12;
+	it.forEach((d, i) => {
+		var a1 = a + d.value / tot * Math.PI * 2, mid = (a + a1) / 2, lr = (R + r0) / 2;
+		o.push('<path class="bar dn" data-si="' + i + '" fill="' + d.color + '" d="' + arcPath(cx, cy, R, r0, a, a1) + '"/>');
+		if (a1 - a > 0.34 && R > 60) o.push(txt(cx + Math.cos(mid) * lr, cy + Math.sin(mid) * lr + 4, fmtPct(d.value / tot), '', 'middle', ' style="fill:' + onFill(d.color) + ';font-weight:600;font-size:10.5px"'));
+		d.mid = mid; a = a1;
+	});
+	o.push(txt(cx, cy + 4, fmtCompact(tot, m.v.fmt), 'dt', 'middle'), txt(cx, cy + 22, fitText(m.v.label, r0 * 1.6, 11), '', 'middle'));
+	var lx = wide ? x0 + 2 * R + 40 : Math.max(8, cx - 120), ly = wide ? Math.max(8, (H - legH) / 2) : ringH + 8, lw = wide ? legW : Math.min(W - 16, 240);
+	it.forEach((d, i) => {
+		var y = ly + i * rowH;
+		o.push('<rect x="' + f1(lx) + '" y="' + f1(y + 5) + '" width="10" height="10" rx="2" fill="' + d.color + '"/>', txt(lx + 16, y + 14, fitText(d.name, lw - 74, 11), 'cl', 'start'), txt(lx + lw, y + 14, fmtPct(d.value / tot), 'pc', 'end'));
+	});
+	return {svg: svgWrap(W, SH, o), n: it.length, hit: (x, y, t) => t && t.getAttribute && t.getAttribute('data-si') != null ? +t.getAttribute('data-si') : -1,
+		tip: (i) => ({h: it[i].name, rows: [{c: it[i].color, v: fmtFull(it[i].value, m.v.fmt), n: m.v.label}, {v: fmtPct(it[i].value / tot), n: 'of the total'}]}),
+		anchor: (i) => ({x: cx + Math.cos(it[i].mid) * R, y: cy + Math.sin(it[i].mid) * R})};
+}
+function scatterChart(m, W, H) {
+	var all = [], o = [], X = [Infinity, -Infinity], Y = [Infinity, -Infinity], sz = [Infinity, -Infinity];
+	m.series.forEach((s) => { s.points.forEach((p) => { all.push({p: p, s: s}); X[0] = Math.min(X[0], p[0]); X[1] = Math.max(X[1], p[0]); Y[0] = Math.min(Y[0], p[1]); Y[1] = Math.max(Y[1], p[1]); if (p[3] != null) { sz[0] = Math.min(sz[0], p[3]); sz[1] = Math.max(sz[1], p[3]); } }); });
+	var top = 24, ph = H - top - 46, tky = yTicks(Y[0], Y[1], ph, m.yv.fmt), left = tky.w + 14, pw = W - left - 16;
+	var dense = all.length > 400, rMax = clamp(18 * Math.sqrt(40 / Math.max(1, all.length)), 5, 16), pad = rMax + 3;
+	var tkx = niceTicks(X[0], X[1], clamp(Math.floor(pw / 90), 2, 8)), sx = (v) => left + pad + (v - tkx.lo) / (tkx.hi - tkx.lo) * (pw - 2 * pad), sy = (v) => top + pad + (tky.hi - v) / (tky.hi - tky.lo) * (ph - 2 * pad);
+	hGrid(o, tky, sy, left, left + pw, m.yv.fmt, left - 8, 'end');
+	tkx.ticks.forEach((t) => { var x = f1(sx(t)); o.push('<line class="gr" x1="' + x + '" x2="' + x + '" y1="' + top + '" y2="' + f1(top + ph) + '"/>', txt(x, top + ph + 16, fmtCompact(t, m.xv.fmt), '', 'middle')); });
+	hRule(o, left, left + pw, top + ph);
+	o.push(txt(0, 13, m.yl, 'at', 'start'), txt(left + pw / 2, H - 6, m.xl, 'at', 'middle'));
+	var bub = m.sv && sz[0] !== Infinity, rMin = dense ? 1.5 : 3, rad = (p) => bub && p[3] != null ? rMin + (rMax - rMin) * Math.sqrt(Math.max(0, p[3] - sz[0]) / ((sz[1] - sz[0]) || 1)) : (dense ? 2.5 : 4);
+	all.forEach((d) => { d.x = sx(d.p[0]); d.y = sy(d.p[1]); d.r = rad(d.p); });
+	all.map((d, i) => i).sort((a, b) => all[b].r - all[a].r).forEach((i) => { var d = all[i]; o.push('<circle class="bar' + (dense ? '' : ' dot') + '" data-si="' + i + '" cx="' + f1(d.x) + '" cy="' + f1(d.y) + '" r="' + f1(d.r) + '" fill="' + d.s.color + '" fill-opacity="' + (dense ? '.5' : bub ? '.72' : '.9') + '"/>'); });
+	return {svg: svgWrap(W, H, o), n: all.length,
+		hit: (x, y) => { var best = -1, bd = Infinity; all.forEach((d, i) => { var q = Math.hypot(d.x - x, d.y - y); if (q < Math.max(12, d.r + 6) && q < bd) { bd = q; best = i; } }); return best; },
+		tip: (i) => { var d = all[i], rows = [{c: d.s.color, v: fmtFull(d.p[0], m.xv.fmt), n: m.xl}, {c: d.s.color, v: fmtFull(d.p[1], m.yv.fmt), n: m.yl}]; if (bub && d.p[3] != null) rows.push({v: fmtFull(d.p[3], m.sv.fmt), n: m.sl}); return {h: d.p[2] + (m.series.length > 1 ? ' · ' + d.s.name : ''), rows: rows}; },
+		anchor: (i) => ({x: all[i].x + all[i].r, y: all[i].y})};
+}
+// squarified treemap layout (Bruls et al.); sets d.r on each item with value > 0
+function squarify(items, x, y, w, h) {
+	var rest = items.filter((d) => d.value > 0).sort((a, b) => b.value - a.value), sum = rest.reduce((s, d) => s + d.value, 0), k = sum ? w * h / sum : 0;
+	while (rest.length && w > 0 && h > 0) {
+		var short = Math.min(w, h), row = [], s = 0, worst = Infinity;
+		while (rest.length) {
+			var v = rest[0].value * k, s2 = s + v, mx = Math.max(v, row.length ? row[0].value * k : 0), mn = v;
+			var wr = Math.max(short * short * mx / (s2 * s2), s2 * s2 / (short * short * mn));
+			if (wr > worst) break;
+			worst = wr; s = s2; row.push(rest.shift());
+		}
+		var th = s / short, p = 0;
+		row.forEach((d) => { var len = d.value * k / th; d.r = w >= h ? {x: x, y: y + p, w: th, h: len} : {x: x + p, y: y, w: len, h: th}; p += len; });
+		if (w >= h) { x += th; w -= th; } else { y += th; h -= th; }
+	}
+	return items;
+}
+function treemapChart(m, W, H) {
+	var o = [], leaves = [], tot = m.total;
+	squarify(m.groups, 0, 0, W, H).forEach((g) => {
+		if (!g.r) return;
+		var x = g.r.x + 1, y = g.r.y + 1, w = g.r.w - 2, h = g.r.h - 2, fg = onFill(g.color);
+		if (w < 1 || h < 1) return;
+		var head = m.depth > 1 && h > 46 && w > 56 ? 20 : 0;
+		if (head) o.push('<rect x="' + f1(x) + '" y="' + f1(y) + '" width="' + f1(w) + '" height="20" rx="3" fill="' + g.color + '"/>', txt(x + 6, y + 14, fitText(g.name + '  ' + fmtCompact(g.value, m.v.fmt), w - 12, 11, 600), '', 'start', ' style="fill:' + fg + ';font-weight:600"'));
+		var kids = m.depth > 1 ? squarify(g.children, x, y + head, w, h - head) : [g];
+		kids.forEach((c) => {
+			if (!c.r) return;
+			var cx = c.r.x + (m.depth > 1 ? 1 : 0), cy = c.r.y + (m.depth > 1 ? 1 : 0), cw = c.r.w - (m.depth > 1 ? 2 : 0), ch = c.r.h - (m.depth > 1 ? 2 : 0), i = leaves.length;
+			if (cw < 0.5 || ch < 0.5) return;
+			leaves.push({g: g, c: c, x: cx + cw / 2, y: cy + ch / 2});
+			o.push('<rect class="bar" data-si="' + i + '" x="' + f1(cx) + '" y="' + f1(cy) + '" width="' + f1(cw) + '" height="' + f1(ch) + '" rx="3" fill="' + g.color + '"' + (m.depth > 1 ? ' fill-opacity=".84"' : '') + '/>');
+			if (cw > 36 && ch > 20) {
+				var st = ' style="fill:' + fg + '"';
+				o.push(txt(cx + 6, cy + 15, fitText(c.name, cw - 12, 11, 600), '', 'start', ' style="fill:' + fg + ';font-weight:600"'));
+				if (ch > 36) o.push(txt(cx + 6, cy + 30, fitText(fmtCompact(c.value, m.v.fmt), cw - 12, 11), '', 'start', st));
+			}
+		});
+	});
+	return {svg: svgWrap(W, H, o), n: leaves.length, hit: (x, y, t) => t && t.getAttribute && t.getAttribute('data-si') != null ? +t.getAttribute('data-si') : -1,
+		tip: (i) => {
+			var L = leaves[i], rows = [{c: L.g.color, v: fmtFull(L.c.value, m.v.fmt), n: m.v.label}];
+			if (m.depth > 1) rows.push({v: fmtPct(L.c.value / L.g.value), n: 'of ' + L.g.name});
+			rows.push({v: fmtPct(L.c.value / tot), n: 'of the total'});
+			return {h: m.depth > 1 ? L.g.name + ' › ' + L.c.name : L.c.name, rows: rows};
+		},
+		anchor: (i) => ({x: leaves[i].x, y: leaves[i].y})};
+}
+function bindChart(body) {
+	var svg = body.querySelector('svg'); if (!svg) return;
+	svg.addEventListener('pointermove', (e) => {
+		var g = S.geo; if (!g) return;
+		var r = svg.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, i = -1, t = e.target && e.target.getAttribute ? e.target.getAttribute('data-si') : null;
+		if (g.hit) { i = g.hit(x, y, e.target); setActive(i, e.clientX, e.clientY, i); return; }
+		if (g.orient === 'v') { if (x >= g.px0 && x <= g.px1 && y >= g.py0 - 10 && y <= g.py1 + 26) i = Math.floor((x - g.px0) / g.step); }
+		else if (y >= g.py0 && y <= g.py1) i = Math.floor((y - g.py0) / g.step);
+		setActive(Math.min(i, g.n - 1), e.clientX, e.clientY, t == null ? -1 : +t);
+	});
+	svg.addEventListener('pointerleave', () => { setActive(-1); });
+}
+function setActive(i, cx, cy, hot) {
+	var g = S.geo, svg = $('#vzBody svg');
+	if (!g || !S.chart || !svg) return;
+	S.active = i;
+	if (hot == null || hot < 0) hot = g.hit ? i : -1;
+	var hl = svg.querySelector('.hl'), xh = svg.querySelector('.xh'), hd = svg.querySelectorAll('.hd circle');
+	svg.classList.toggle('dim', i >= 0 && hot >= 0);
+	svg.querySelectorAll('.bar.hot').forEach((b) => { b.classList.remove('hot'); });
+	if (i < 0) { if (hl) hl.setAttribute('opacity', 0); if (xh) xh.setAttribute('opacity', 0); hd.forEach((c) => { c.setAttribute('opacity', 0); }); hideTip(); return; }
+	if (hot >= 0) svg.querySelectorAll('.bar[data-si="' + hot + '"]').forEach((b) => { b.classList.add('hot'); });
+	if (g.line) {
+		var x = g.xs(i);
+		if (xh) { xh.setAttribute('x1', f1(x)); xh.setAttribute('x2', f1(x)); xh.setAttribute('opacity', 1); }
+		hd.forEach((c, si) => { var y = g.ys[si][i]; if (y == null) { c.setAttribute('opacity', 0); return; } c.setAttribute('cx', f1(x)); c.setAttribute('cy', f1(y)); c.setAttribute('opacity', 1); });
+	} else if (hl) { hl.setAttribute(g.orient === 'v' ? 'x' : 'y', f1((g.orient === 'v' ? g.px0 : g.py0) + g.step * i)); hl.setAttribute('opacity', 1); }
+	var t = g.tip(i, hot), tip = $('#tip'), add = (cls, tag, text, parent) => { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; (parent || tip).appendChild(e); return e; };
+	tip.textContent = '';
+	add('tt-h', 'div', t.h);
+	t.rows.forEach((r) => { var row = add('tt-r' + (r.hot ? ' hot' : '') + (r.tot ? ' tot' : ''), 'div'), k = add('', 'i', null, row); if (r.c) k.style.background = r.c; add('', 'b', r.v, row); add('', 'span', r.n, row); });
+	if (cx == null) { var rr = svg.getBoundingClientRect(), a = g.anchor(i); cx = rr.left + a.x; cy = rr.top + a.y; announce(t.h + ': ' + t.rows.map((r) => r.v + ' ' + r.n).join(', ')); }
+	showTip(cx, cy);
+}
+function showTip(x, y) {
+	var tip = $('#tip'); tip.hidden = false;
+	var w = tip.offsetWidth, h = tip.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+	var l = x + 14, t = y + 14;
+	if (l + w > vw - 6) l = x - w - 14;
+	if (t + h > vh - 6) t = y - h - 14;
+	tip.style.transform = 'translate(' + Math.round(clamp(l, 6, Math.max(6, vw - w - 6))) + 'px,' + Math.round(clamp(t, 6, Math.max(6, vh - h - 6))) + 'px)';
+}
+function shade() { var b = $('#vzBody'); if (b && !S.chart) b.classList.toggle('more-r', b.scrollWidth - b.scrollLeft - b.clientWidth > 2); }
+function hideTip() { var t = $('#tip'); if (t) t.hidden = true; }
+
+/* ================= popovers & menus ================= */
+var POP = null;
+function openPop(anchor, html, opts) {
+	closePop();
+	opts = opts || {};
+	var el = document.createElement('div'); el.className = 'pop ' + (opts.cls || ''); el.innerHTML = html;
+	document.body.appendChild(el);
+	POP = {el: el, anchor: anchor, key: anchor && anchor.dataset ? anchor.dataset.k : null, onClose: opts.onClose};
+	if (anchor) anchor.setAttribute('aria-expanded', 'true');
+	placePop();
+	el.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(true); return; }
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			var items = Array.prototype.slice.call(el.querySelectorAll('.mi:not([disabled])')); if (!items.length) return;
+			if (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') return;
+			e.preventDefault();
+			var ix = items.indexOf(document.activeElement), nx = e.key === 'ArrowDown' ? ix + 1 : ix - 1;
+			items[(nx + items.length) % items.length].focus();
+		}
+	});
+	var first = opts.focus ? el.querySelector(opts.focus) : (el.querySelector('.mi:not([disabled])[aria-checked="true"]') || el.querySelector('.mi:not([disabled])'));
+	if (first) first.focus();
+	return POP;
+}
+function placePop() {
+	if (!POP) return;
+	var el = POP.el, a = POP.anchor;
+	var r = a && a.isConnected ? a.getBoundingClientRect() : (POP.rect || {left: 20, bottom: 60, top: 40});
+	POP.rect = {left: r.left, bottom: r.bottom, top: r.top};
+	var w = el.offsetWidth, h = el.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+	var x = r.left, y = r.bottom + 4;
+	if (x + w > vw - 8) x = Math.max(8, vw - 8 - w);
+	if (y + h > vh - 8) { var up = r.top - 4 - h; y = up >= 8 ? up : Math.max(8, vh - 8 - h); }
+	el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px';
+}
+function closePop(restore) {
+	if (!POP) return;
+	var p = POP; POP = null;
+	p.el.remove();
+	if (p.anchor && p.anchor.isConnected) p.anchor.setAttribute('aria-expanded', 'false');
+	if (p.onClose) p.onClose();
+	if (restore && p.key) focusKey(p.key);
+}
+document.addEventListener('pointerdown', (e) => { if (POP && !POP.el.contains(e.target) && !(POP.anchor && POP.anchor.isConnected && POP.anchor.contains(e.target))) closePop(); }, true);
+window.addEventListener('resize', () => { closePop(); hideTip(); });
+function menuHTML(items) {
+	return '<div class="menu" role="menu">' + items.map((it, ix) => {
+		if (it.sep) return '<hr>';
+		if (it.header) return '<div class="mh" role="presentation">' + esc(it.header) + '</div>';
+		return '<button class="mi' + (it.danger ? ' danger' : '') + '" role="' + (it.radio ? 'menuitemradio' : 'menuitem') + '"' + (it.radio ? ' aria-checked="' + !!it.checked + '"' : '') + ' data-mi="' + ix + '"' + (it.disabled ? ' disabled' : '') + '><span class="ck">' + (it.checked ? icon('check', 'xs') : '') + '</span><span>' + esc(it.label) + '</span>' + (it.hint ? '<kbd>' + esc(it.hint) + '</kbd>' : '') + '</button>';
+	}).join('') + '</div>';
+}
+function openMenu(anchor, items, onPick) {
+	var p = openPop(anchor, menuHTML(items));
+	p.el.addEventListener('click', (e) => {
+		var b = e.target.closest('[data-mi]'); if (!b || b.disabled) return;
+		var it = items[+b.dataset.mi];
+		closePop(true);
+		onPick(it);
+	});
+}
+function openFieldMenu(el) {
+	var name = el.dataset.field, f = S.byName.get(name), v = S.view;
+	var items = [{header: f.label}];
+	['rows', 'columns', 'values', 'filters'].forEach((s) => {
+		var dis = (s === 'rows' && v.rows.indexOf(name) >= 0) || (s === 'columns' && v.columns.indexOf(name) >= 0) || (s === 'filters' && name in v.filters);
+		items.push({label: 'Add to ' + SHELF_NAME[s], shelf: s, disabled: dis});
+	});
+	openMenu(el, items, (it) => { dropOn({type: 'field', field: name}, it.shelf, 1e9); });
+}
+function openPillMenu(el) {
+	var shelf = el.dataset.shelf, idx = +el.dataset.idx, v = S.view, items = [];
+	if (shelf === 'filters') { openFilterEditor(el, Object.keys(v.filters)[idx]); return; }
+	var name = shelfItems(shelf)[idx], f = S.byName.get(name);
+	if (!f) return;
+	if (shelf === 'values') {
+		var it0 = v.values[idx];
+		items.push({header: 'Aggregation'});
+		AGGS.forEach((a) => { if (f.type !== 'number' && DIM_AGGS.indexOf(a[0]) < 0) return; items.push({label: a[1], radio: true, checked: it0.agg === a[0], act: 'agg', agg: a[0]}); });
+		items.push({sep: 1});
+		items.push({label: (name in v.filters) ? 'Edit filter' : 'Filter on ' + f.label, act: 'filter'});
+	} else {
+		if (f.type === 'date') {
+			items.push({header: 'Date grain'});
+			GRAINS.forEach((g) => { items.push({label: g[1], radio: true, checked: (v.date_grain[name] || 'month') === g[0], act: 'grain', grain: g[0]}); });
+			items.push({sep: 1});
+		}
+		var other = shelf === 'rows' ? 'columns' : 'rows';
+		items.push({label: 'Move to ' + SHELF_NAME[other], act: 'move', to: other});
+		items.push({label: (name in v.filters) ? 'Edit filter' : 'Filter on ' + f.label, act: 'filter'});
+	}
+	var len = shelfItems(shelf).length;
+	items.push({sep: 1});
+	items.push({label: 'Move left', act: 'nudge', d: -1, disabled: idx === 0, hint: 'Alt \u2190'});
+	items.push({label: 'Move right', act: 'nudge', d: 1, disabled: idx >= len - 1, hint: 'Alt \u2192'});
+	items.push({sep: 1});
+	items.push({label: 'Remove', act: 'remove', danger: true, hint: 'Del'});
+	openMenu(el, items, (it) => {
+		switch (it.act) {
+			case 'agg': v.values[idx].agg = it.agg; commit(f.label + ' now uses ' + AGG_NAME[it.agg]); break;
+			case 'grain': v.date_grain[name] = it.grain; commit(f.label + ' grouped by ' + it.grain); break;
+			case 'move': dropOn({type: 'pill', shelf: shelf, idx: idx, field: name}, it.to, 1e9); break;
+			case 'filter': if (!(name in v.filters)) { addFilterKey(name, 1e9); commit(); } openFilterLater(name); break;
+			case 'nudge': nudge(shelf, idx, it.d); break;
+			case 'remove': removePill(shelf, idx); break;
+		}
+	});
+}
+function openFilterLater(name) {
+	requestAnimationFrame(() => { requestAnimationFrame(() => {
+		var ix = Object.keys(S.view.filters).indexOf(name);
+		var el = null; document.querySelectorAll('.pl-b[data-shelf="filters"]').forEach((b) => { if (+b.dataset.idx === ix) el = b; });
+		if (el) openFilterEditor(el, name);
+	}); });
+}
+function filterGrain(name) {
+	var spec = S.view.filters[name];
+	if (Array.isArray(spec) && spec.length) return detectGrain(spec) || 'day';
+	return S.ui.feGrain[name] || S.view.date_grain[name] || autoGrain(S.byName.get(name));
+}
+function openFilterEditor(anchor, name) {
+	var f = S.byName.get(name); if (!f) return;
+	if (f.type === 'number') { openRangeEditor(anchor, f); return; }
+	var st = {q: ''};
+	var p = openPop(anchor, '<div class="fe" role="dialog" aria-label="Filter ' + esc(f.label) + '"></div>', {focus: 'input[type=search]'});
+	var root = p.el.firstChild;
+	var keysFor = () => distinctKeys(f, f.type === 'date' ? filterGrain(name) : null);
+	var selSet = () => { var spec = S.view.filters[name], all = keysFor(); return spec == null ? new Set(all.map((d) => d.key)) : new Set(spec.map((x) => x == null ? BLANK : String(x))); };
+	var listHTML = () => {
+		var all = keysFor(), sel = selSet(), q = st.q.trim().toLowerCase();
+		var vis = q ? all.filter((d) => d.label.toLowerCase().indexOf(q) >= 0) : all;
+		var shown = vis.slice(0, 300);
+		var h = shown.map((d) => '<label class="ckr"><input type="checkbox" data-key="' + esc(d.key) + '"' + (sel.has(d.key) ? ' checked' : '') + '><span class="t" title="' + esc(d.label) + '">' + esc(d.label) + '</span><span class="c">' + fmtInt(d.count) + '</span></label>').join('');
+		if (vis.length > shown.length) h += '<div class="fe-more">' + fmtInt(vis.length - shown.length) + ' more \u2014 search to narrow the list</div>';
+		if (!vis.length) h += '<div class="fe-more">No values match.</div>';
+		return h;
+	};
+	var countText = () => { var all = keysFor(), sel = selSet(); return fmtInt(sel.size) + ' of ' + fmtInt(all.length); };
+	var paint = () => {
+		var h = '<div class="fe-h"><b>' + esc(f.label) + '</b><span>' + fmtInt(keysFor().length) + ' values</span></div>';
+		if (f.type === 'date') { var gr = filterGrain(name); h += '<div class="fe-g"><div class="seg small" role="group" aria-label="Filter by">' + GRAINS.map((g) => '<button class="' + (gr === g[0] ? 'on' : '') + '" data-fg="' + g[0] + '" aria-pressed="' + (gr === g[0]) + '">' + g[1] + '</button>').join('') + '</div></div>'; }
+		h += '<div class="fe-s"><input class="input" type="search" placeholder="Search values" aria-label="Search values" value="' + esc(st.q) + '"></div>';
+		h += '<div class="fe-a"><button class="lnk" data-fe="all">Select all</button><button class="lnk" data-fe="none">Select none</button><span class="n" aria-live="polite">' + countText() + '</span></div>';
+		h += '<div class="fe-l" role="group" aria-label="Values">' + listHTML() + '</div>';
+		h += '<div class="fe-f"><button class="lnk danger" data-fe="remove">Remove filter</button><span class="sp"></span><button class="btn sm dark" data-fe="done">Done</button></div>';
+		root.innerHTML = h;
+		placePop();
+	};
+	var apply = (sel) => {
+		var all = keysFor();
+		var everything = all.every((d) => sel.has(d.key));
+		S.view.filters[name] = everything ? null : all.filter((d) => sel.has(d.key)).map((d) => d.key === BLANK ? null : d.key);
+		var n = root.querySelector('.fe-a .n'); if (n) n.textContent = countText();
+		commit();
+	};
+	paint();
+	var sIn = root.querySelector('input[type=search]'); if (sIn) sIn.focus();
+	root.addEventListener('input', (e) => { if (e.target.type === 'search') { st.q = e.target.value; root.querySelector('.fe-l').innerHTML = listHTML(); } });
+	root.addEventListener('change', (e) => {
+		var cb = e.target; if (cb.type !== 'checkbox') return;
+		var sel = selSet(); if (cb.checked) sel.add(cb.dataset.key); else sel.delete(cb.dataset.key);
+		apply(sel);
+	});
+	root.addEventListener('click', (e) => {
+		var g = e.target.closest('[data-fg]');
+		if (g) { S.ui.feGrain[name] = g.dataset.fg; S.view.filters[name] = null; commit(); paint(); var b = root.querySelector('[data-fg="' + g.dataset.fg + '"]'); if (b) b.focus(); return; }
+		var b2 = e.target.closest('[data-fe]'); if (!b2) return;
+		var a = b2.dataset.fe;
+		if (a === 'all') { S.view.filters[name] = null; commit(); root.querySelector('.fe-l').innerHTML = listHTML(); root.querySelector('.fe-a .n').textContent = countText(); }
+		else if (a === 'none') { S.view.filters[name] = []; commit(); root.querySelector('.fe-l').innerHTML = listHTML(); root.querySelector('.fe-a .n').textContent = countText(); }
+		else if (a === 'remove') { closePop(); delete S.view.filters[name]; commit('Filter on ' + f.label + ' removed'); }
+		else if (a === 'done') closePop(true);
+	});
+}
+function openRangeEditor(anchor, f) {
+	var e = extent(f), fmt = f.currency ? 'currency' : 'number', spec = S.view.filters[f.name] || {};
+	var h = '<div class="fe" role="dialog" aria-label="Filter ' + esc(f.label) + '"><div class="fe-h"><b>' + esc(f.label) + '</b><span>' + (e.lo == null ? 'no values' : esc(fmtCompact(e.lo, fmt) + ' \u2013 ' + fmtCompact(e.hi, fmt))) + '</span></div>' +
+		'<div class="fe-r"><label>Minimum<input class="input" type="number" step="any" data-r="min" placeholder="' + (e.lo == null ? '' : esc(e.lo)) + '" value="' + (spec.min == null ? '' : esc(spec.min)) + '"></label>' +
+		'<label>Maximum<input class="input" type="number" step="any" data-r="max" placeholder="' + (e.hi == null ? '' : esc(e.hi)) + '" value="' + (spec.max == null ? '' : esc(spec.max)) + '"></label></div>' +
+		'<div class="fe-f"><button class="lnk danger" data-fe="remove">Remove filter</button><button class="lnk" data-fe="clear">Clear</button><span class="sp"></span><button class="btn sm dark" data-fe="done">Done</button></div></div>';
+	var p = openPop(anchor, h, {focus: 'input[data-r=min]'});
+	var root = p.el.firstChild, timer = 0;
+	var apply = () => {
+		var lo = toNum(root.querySelector('[data-r=min]').value), hi = toNum(root.querySelector('[data-r=max]').value);
+		S.view.filters[f.name] = lo == null && hi == null ? null : {min: lo, max: hi};
+		commit();
+	};
+	root.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(apply, 250); });
+	root.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && ev.target.tagName === 'INPUT') { clearTimeout(timer); apply(); closePop(true); } });
+	root.addEventListener('click', (ev) => {
+		var b = ev.target.closest('[data-fe]'); if (!b) return;
+		var a = b.dataset.fe;
+		if (a === 'clear') { root.querySelectorAll('input').forEach((i) => { i.value = ''; }); clearTimeout(timer); apply(); }
+		else if (a === 'remove') { clearTimeout(timer); closePop(); delete S.view.filters[f.name]; commit('Filter on ' + f.label + ' removed'); }
+		else if (a === 'done') { clearTimeout(timer); apply(); closePop(true); }
+	});
+}
+function openSortMenu(el) {
+	var s = S.view.sort, d = S.view.rows[0] && S.byName.get(S.view.rows[0]);
+	var lab = d ? d.label : 'label';
+	var items = [{header: 'Sort ' + lab},
+		{label: 'By label, ascending', radio: true, checked: s.by === 'label' && s.dir === 'asc', by: 'label', dir: 'asc'},
+		{label: 'By label, descending', radio: true, checked: s.by === 'label' && s.dir === 'desc', by: 'label', dir: 'desc'},
+		{label: 'By value, high to low', radio: true, checked: s.by === 'value' && s.dir === 'desc', by: 'value', dir: 'desc'},
+		{label: 'By value, low to high', radio: true, checked: s.by === 'value' && s.dir === 'asc', by: 'value', dir: 'asc'}];
+	openMenu(el, items, (it) => { S.view.sort = {by: it.by, dir: it.dir}; commit('Sorted ' + it.label.toLowerCase()); });
+}
+function openTopMenu(el) {
+	var cur = S.view.top_n || null;
+	var items = [{header: 'Keep the top members'}].concat([null, 5, 10, 20].map((n) => { return {label: n ? 'Top ' + n : 'All', radio: true, checked: cur === n, n: n}; }));
+	if (cur && [5, 10, 20].indexOf(cur) < 0) items.push({label: 'Top ' + cur, radio: true, checked: true, n: cur});
+	openMenu(el, items, (it) => { S.view.top_n = it.n; commit(it.n ? 'Showing the top ' + it.n : 'Showing all members'); });
+}
+function openChartValueMenu(el) {
+	var v = S.view, items = [{header: 'Chart this value'}].concat(v.values.map((x, i) => { return {label: S.byName.get(x.field).label + ' (' + AGG_WORD[x.agg] + ')', radio: true, checked: i === 0, i: i}; }));
+	openMenu(el, items, (it) => { if (it.i > 0) { var x = v.values.splice(it.i, 1)[0]; v.values.unshift(x); commit(); } });
+}
+
+/* ================= view mutations ================= */
+function commit(msg) {
+	scheduleSave();
+	var v = S.view;
+	v.rows = uniq(v.rows); v.columns = uniq(v.columns).filter((n) => v.rows.indexOf(n) < 0);
+	v.rows.concat(v.columns).forEach(ensureGrain);
+	if (v.rows[0] !== S.lastFirst) { v.sort = defaultSort(v.rows[0]); S.lastFirst = v.rows[0]; }
+	if (!v.sort) v.sort = defaultSort(v.rows[0]);
+	if (msg) announce(msg);
+	render();
+}
+function addFilterKey(name, idx) {
+	var keys = Object.keys(S.view.filters).filter((k) => k !== name), old = S.view.filters;
+	keys.splice(clamp(idx, 0, keys.length), 0, name);
+	var nf2 = {}; keys.forEach((k) => { nf2[k] = k === name ? (name in old ? old[name] : null) : old[k]; });
+	S.view.filters = nf2;
+}
+function reorder(shelf, from, to) {
+	var v = S.view;
+	if (shelf === 'filters') { var keys = Object.keys(v.filters), k = keys.splice(from, 1)[0]; if (to > from) to--; keys.splice(clamp(to, 0, keys.length), 0, k); var o = {}; keys.forEach((x) => { o[x] = v.filters[x]; }); v.filters = o; return; }
+	var arr = shelf === 'values' ? v.values : v[shelf];
+	var item = arr.splice(from, 1)[0]; if (to > from) to--; arr.splice(clamp(to, 0, arr.length), 0, item);
+}
+function nudge(shelf, idx, d) {
+	var len = shelfItems(shelf).length, to = d < 0 ? idx - 1 : idx + 2;
+	if (idx + d < 0 || idx + d >= len) return;
+	reorder(shelf, idx, to);
+	commit('Moved ' + (d < 0 ? 'left' : 'right'));
+	var k = 'p:' + shelf + ':' + (idx + d);
+	requestAnimationFrame(() => { requestAnimationFrame(() => { focusKey(k); }); });
+}
+function removePill(shelf, idx) {
+	var v = S.view, name;
+	if (shelf === 'values') name = v.values.splice(idx, 1)[0].field;
+	else if (shelf === 'filters') { name = Object.keys(v.filters)[idx]; delete v.filters[name]; }
+	else name = v[shelf].splice(idx, 1)[0];
+	var f = S.byName.get(name);
+	commit((f ? f.label : 'Field') + ' removed from ' + SHELF_NAME[shelf]);
+}
+function dropOn(d, shelf, idx) {
+	var v = S.view, f = S.byName.get(d.field);
+	if (!f) return;
+	var from = d.type === 'pill' ? d : null;
+	if (from && from.shelf === shelf) { reorder(shelf, from.idx, idx); commit(f.label + ' moved'); return; }
+	if (shelf === 'rows' || shelf === 'columns') {
+		if (from && (from.shelf === 'rows' || from.shelf === 'columns')) v[from.shelf].splice(from.idx, 1);
+		['rows', 'columns'].forEach((s) => { var j = v[s].indexOf(d.field); if (j >= 0) { v[s].splice(j, 1); if (s === shelf && j < idx) idx--; } });
+		v[shelf].splice(clamp(idx, 0, v[shelf].length), 0, d.field);
+		if (from && from.shelf === 'values') v.values.splice(from.idx, 1);
+		ensureGrain(d.field);
+		commit(f.label + ' added to ' + SHELF_NAME[shelf]);
+	} else if (shelf === 'values') {
+		var agg = from && from.shelf === 'values' ? v.values[from.idx].agg : (f.type === 'number' ? 'sum' : 'count_distinct');
+		var allowed = f.type === 'number' ? AGGS.map((a) => a[0]) : DIM_AGGS;
+		if (v.values.some((x) => x.field === d.field && x.agg === agg)) {
+			var free = allowed.filter((a) => { return !v.values.some((x) => x.field === d.field && x.agg === a); });
+			if (!free.length) { toast('info', f.label + ' is already on Values with every aggregation.', {id: 'hint'}); return; }
+			agg = free[0];
+		}
+		v.values.splice(clamp(idx, 0, v.values.length), 0, {field: d.field, agg: agg});
+		if (from && (from.shelf === 'rows' || from.shelf === 'columns')) v[from.shelf].splice(from.idx, 1);
+		commit(f.label + ' (' + AGG_WORD[agg] + ') added to Values');
+	} else if (shelf === 'filters') {
+		if (d.field in v.filters) { toast('info', 'There\u2019s already a filter on ' + f.label + '.', {id: 'hint'}); openFilterLater(d.field); return; }
+		addFilterKey(d.field, idx);
+		commit('Filter on ' + f.label + ' added');
+		openFilterLater(d.field);
+	}
+}
+function quickAdd(name) {
+	var f = S.byName.get(name), v = S.view;
+	if (!f) return;
+	if (f.kind === 'measure') {
+		if (v.values.some((x) => x.field === name)) { toast('info', f.label + ' is already on Values. Use its menu to change the aggregation.', {id: 'hint'}); return; }
+		dropOn({type: 'field', field: name}, 'values', 1e9);
+		return;
+	}
+	if (v.rows.indexOf(name) >= 0 || v.columns.indexOf(name) >= 0) { toast('info', f.label + ' is already on ' + (v.rows.indexOf(name) >= 0 ? 'Rows' : 'Columns') + '.', {id: 'hint'}); return; }
+	var target = !v.rows.length ? 'rows' : (!v.columns.length ? 'columns' : 'rows');
+	dropOn({type: 'field', field: name}, target, 1e9);
+}
+
+/* ================= drag & drop ================= */
+var DRAG = null;
+function insertIndex(zone, x, y) {
+	var pills = zone.querySelectorAll('.pill');
+	for (var i = 0; i < pills.length; i++) {
+		var r = pills[i].getBoundingClientRect();
+		if (y < r.top) return i;
+		if (y <= r.bottom && x < r.left + r.width / 2) return i;
+	}
+	return pills.length;
+}
+function clearMarks() {
+	document.querySelectorAll('.sh-z.over,.sh-z.ins-end').forEach((z) => { z.classList.remove('over', 'ins-end'); });
+	document.querySelectorAll('.pill.ins-before').forEach((p) => { p.classList.remove('ins-before'); });
+	var fp = $('#fields'); if (fp) fp.classList.remove('drop-rm');
+}
+function markInsert(zone, idx) {
+	clearMarks();
+	zone.classList.add('over');
+	var pills = zone.querySelectorAll('.pill');
+	if (idx < pills.length) pills[idx].classList.add('ins-before'); else if (pills.length) zone.classList.add('ins-end');
+}
+function endDrag() { DRAG = null; clearMarks(); document.documentElement.classList.remove('is-dragging'); document.querySelectorAll('.drag-src').forEach((e) => { e.classList.remove('drag-src'); }); }
+document.addEventListener('dragstart', (e) => {
+	var el = e.target && e.target.closest ? e.target.closest('[data-drag]') : null;
+	if (!el) return;
+	closePop(); hideTip();
+	DRAG = el.dataset.drag === 'field' ? {type: 'field', field: el.dataset.field} : {type: 'pill', shelf: el.dataset.shelf, idx: +el.dataset.idx, field: el.dataset.field};
+	try { e.dataTransfer.setData('text/plain', DRAG.field); e.dataTransfer.effectAllowed = 'copyMove'; } catch (x) { /* ignore */ }
+	document.documentElement.classList.add('is-dragging');
+	el.classList.add('drag-src');
+});
+document.addEventListener('dragover', (e) => {
+	if (!DRAG) return;
+	var z = e.target.closest ? e.target.closest('.shelf') : null, zone = z ? z.querySelector('[data-zone]') : null;
+	var fp = e.target.closest ? e.target.closest('#fields') : null;
+	if (zone) { e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (x) { /* ignore */ } markInsert(zone, insertIndex(zone, e.clientX, e.clientY)); }
+	else if (fp && DRAG.type === 'pill') { e.preventDefault(); clearMarks(); fp.classList.add('drop-rm'); }
+	else clearMarks();
+});
+document.addEventListener('drop', (e) => {
+	if (!DRAG) return;
+	var z = e.target.closest ? e.target.closest('.shelf') : null, zone = z ? z.querySelector('[data-zone]') : null;
+	var fp = e.target.closest ? e.target.closest('#fields') : null, d = DRAG;
+	if (zone) { e.preventDefault(); var idx = insertIndex(zone, e.clientX, e.clientY); endDrag(); dropOn(d, zone.dataset.zone, idx); }
+	else if (fp && d.type === 'pill') { e.preventDefault(); endDrag(); removePill(d.shelf, d.idx); }
+	else endDrag();
+});
+document.addEventListener('dragend', endDrag);
+
+/* ================= global events ================= */
+document.addEventListener('click', (e) => {
+	var el = e.target.closest ? e.target.closest('[data-act]') : null;
+	if (!el || el.disabled || (POP && POP.el.contains(el))) return;
+	var a = el.dataset.act, v = S.view;
+	switch (a) {
+		case 'export': doExport(el.dataset.fmt === 'csv' ? 'csv' : 'xlsx'); break;
+		case 'report': doReport(); break;
+		case 'fullscreen': toggleFullscreen(); break;
+		case 'retry': loadRows(); break;
+		case 'changeData': openPicker(); break;
+		case 'pickTable': pickSource({table_id: el.dataset.id}); break;
+		case 'pickFile': pickSource({file_id: el.dataset.id}); break;
+		case 'pickSample': pickSource({sample: true}); break;
+		case 'pickBack': S.status = 'ready'; render(); break;
+		case 'reconnect': init(); break;
+		case 'addField': quickAdd(el.dataset.field); break;
+		case 'fieldMenu': openFieldMenu(el); break;
+		case 'pillMenu': if (POP && POP.anchor === el) { closePop(); break; } openPillMenu(el); break;
+		case 'pillRemove': removePill(el.dataset.shelf, +el.dataset.idx); break;
+		case 'chart': v.chart = el.dataset.chart; S.chartSig = ''; scheduleSave(); render(); announce(el.getAttribute('aria-label') + ' view'); break;
+		case 'sortMenu': openSortMenu(el); break;
+		case 'topMenu': openTopMenu(el); break;
+		case 'chartValueMenu': openChartValueMenu(el); break;
+		case 'chartMore': openMenu(el, [{header: 'More charts'}].concat(CHARTS.slice(5).map((c) => ({label: c[1], radio: true, checked: v.chart === c[0], c: c[0]}))), (it) => { v.chart = it.c; S.chartSig = ''; scheduleSave(); render(); announce(it.label + ' view'); }); break;
+		case 'addValue': v.values.push({field: el.dataset.field, agg: 'sum'}); commit('Value added'); break;
+		case 'useSum': v.values[0].agg = S.byName.get(v.values[0].field).type === 'number' ? 'sum' : 'count'; commit('Aggregation changed'); break;
+		case 'subtotals': v.subtotals = !v.subtotals; commit(v.subtotals ? 'Subtotals on' : 'Subtotals off'); break;
+		case 'swap': var t = v.rows; v.rows = v.columns; v.columns = t; commit('Rows and columns swapped'); break;
+		case 'reset': S.view = clone(S.initialView); S.lastFirst = S.view.rows[0]; S.ui.feGrain = {}; commit('View reset'); break;
+		case 'toggleFields': S.ui.fieldsHidden = !S.ui.fieldsHidden; scheduleSave(); render(); requestAnimationFrame(() => { requestAnimationFrame(() => { focusKey(S.ui.fieldsHidden ? 'fp-show' : 'fp-hide'); }); }); break;
+		case 'clearFilters': v.filters = {}; v.top_n = null; commit('Filters cleared'); break;
+		case 'countRows': var f0 = S.fields.find((f) => f.kind === 'dim') || S.fields[0]; v.values.push({field: f0.name, agg: 'count'}); commit('Counting rows'); break;
+		case 'toastClose': dismiss(el.dataset.id); break;
+	}
+});
+document.addEventListener('keydown', (e) => {
+	var t = e.target;
+	if (e.key === 'Escape' && POP && !POP.el.contains(t)) { closePop(true); return; }
+	if (!t || !t.closest) return;
+	if ((e.key === 'Enter' || e.key === ' ') && t.getAttribute('role') === 'button' && t.dataset.act) { e.preventDefault(); t.click(); return; }
+	if (t.classList.contains('pl-b')) {
+		var shelf = t.dataset.shelf, idx = +t.dataset.idx;
+		if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removePill(shelf, idx); var left = 'p:' + shelf + ':' + Math.max(0, idx - 1); requestAnimationFrame(() => { requestAnimationFrame(() => { if (!focusKey(left)) focusKey('c:' + S.view.chart); }); }); return; }
+		if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); nudge(shelf, idx, e.key === 'ArrowLeft' ? -1 : 1); return; }
+		if (e.key === 'ArrowDown') { e.preventDefault(); t.click(); return; }
+	}
+	if (t.id === 'vzBody' && S.geo) {
+		var n = S.geo.n, i = S.active;
+		if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(n - 1, i + 1)); }
+		else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(0, i < 0 ? 0 : i - 1)); }
+		else if (e.key === 'Home') { e.preventDefault(); setActive(0); }
+		else if (e.key === 'End') { e.preventDefault(); setActive(n - 1); }
+		else if (e.key === 'Escape') setActive(-1);
+	}
+});
+document.addEventListener('focusout', (e) => { if (e.target && e.target.id === 'vzBody') setActive(-1); });
+document.addEventListener('input', (e) => {
+	if (e.target && e.target.id === 'fsearch') { S.ui.search = e.target.value; var l = $('#flist'); if (l) l.innerHTML = fieldListHTML(); }
+});
+document.addEventListener('scroll', (e) => { hideTip(); if (e.target && e.target.id === 'vzBody') shade(); }, true);
+var ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { requestAnimationFrame(() => { if (S.chart) drawChart(); else shade(); reportSize(); if (POP) placePop(); }); }) : null;
+if (ro) { ro.observe(document.body); ro.observe($('#viz')); }
+else window.addEventListener('resize', () => { requestAnimationFrame(() => { if (S.chart) drawChart(); reportSize(); }); });
+var lastSize = '';
+function reportSize() {
+	if (S.torn || !S.inited) return;
+	if (S.ctx.displayMode === 'fullscreen') return;
+	var de = document.documentElement, app = $('#app'), w = Math.ceil(de.scrollWidth);
+	var h = Math.ceil(Math.min(de.scrollHeight, Math.max(app.offsetHeight, document.body.scrollHeight))), k = w + 'x' + h;
+	if (k === lastSize) return;
+	lastSize = k;
+	notify('ui/notifications/size-changed', {width: w, height: h});
+}
+
+/* ================= toasts & announcements ================= */
+var TOASTS = new Map(), tseq = 0;
+function toast(kind, text, opts) {
+	opts = opts || {};
+	var id = opts.id || ('t' + (++tseq)), prev = TOASTS.get(id);
+	if (prev && prev.timer) clearTimeout(prev.timer);
+	var t = {id: id, kind: kind, text: text, action: opts.action || null};
+	if (kind === 'ok' || kind === 'info') t.timer = setTimeout(() => { dismiss(id); }, opts.ms || 4500);
+	TOASTS.set(id, t);
+	paintToasts();
+	return id;
+}
+function dismiss(id) { var t = TOASTS.get(id); if (t && t.timer) clearTimeout(t.timer); TOASTS.delete(id); paintToasts(); }
+function paintToasts() {
+	var h = '';
+	TOASTS.forEach((t) => {
+		var ic = t.kind === 'progress' ? '<span class="spin" aria-hidden="true"></span>' : icon(t.kind === 'error' ? 'alert' : t.kind === 'ok' ? 'check' : 'info', 'sm');
+		var act = t.action ? '<button class="tb" data-act="' + t.action.act + '"' + (t.action.fmt ? ' data-fmt="' + t.action.fmt + '"' : '') + '>' + esc(t.action.label) + '</button>' : '';
+		var x = t.kind !== 'progress' ? '<button class="tx-x" data-act="toastClose" data-id="' + t.id + '" aria-label="Dismiss">' + icon('x', 'xs') + '</button>' : '';
+		h += '<div class="toast ' + t.kind + '" role="' + (t.kind === 'error' ? 'alert' : 'status') + '">' + ic + '<span class="tx">' + esc(t.text) + '</span>' + act + x + '</div>';
+	});
+	$('#toasts').innerHTML = h;
+}
+function announce(s) { var el = $('#sr'); if (el) { el.textContent = ''; setTimeout(() => { el.textContent = s; }, 30); } }
+
+/* ================= export payloads ================= */
+function exportView() {
+	var v = S.view, filters = {}, dg = {};
+	Object.keys(v.filters).forEach((k) => { var s = v.filters[k]; if (s != null) filters[k] = Array.isArray(s) ? s.slice() : {min: s.min, max: s.max}; });
+	v.rows.concat(v.columns).forEach((n) => { if (S.byName.get(n).type === 'date') dg[n] = v.date_grain[n] || 'month'; });
+	return {rows: v.rows.slice(), columns: v.columns.slice(), values: v.values.map((x) => { return {field: x.field, agg: x.agg}; }), filters: filters, date_grain: dg, chart: v.chart,
+		sort: {field: v.rows[0] || null, by: v.sort.by, dir: v.sort.dir}, top_n: v.top_n || null, subtotals: !!v.subtotals};
+}
+function cleanNum(v) { return typeof v === 'number' && isFinite(v) ? +v.toPrecision(12) : (v == null ? null : v); }
+function exportTable(res, maxRows) {
+	var g = buildGrid(res, maxRows || MAX_EXPORT_ROWS), nr = res.nr, nc = res.nc, nLab = Math.max(1, nr), vs = res.vs;
+	var columns = nr ? res.rd.map((d) => { return {label: d.title, kind: 'dimension', format: 'text'}; }) : [{label: '', kind: 'dimension', format: 'text'}];
+	g.leaf.forEach((l) => {
+		var v = vs[l.k], label = l.total ? 'Total \u00b7 ' + v.label : (nc ? l.c.labels.join(' \u00b7 ') + ' \u00b7 ' + v.label : v.label);
+		columns.push({label: label, kind: 'measure', format: v.fmt});
+	});
+	var rows = g.body.map((r) => {
+		var labs;
+		if (r.kind === 'row') labs = nr ? r.labels.slice() : ['All rows'];
+		else { labs = r.labels.slice(0, r.level - 1); labs.push(r.labels[r.level - 1] + ' total'); while (labs.length < nLab) labs.push(''); }
+		return labs.concat(r.vals.map(cleanNum));
+	});
+	var totals = g.total ? ['Grand total'].concat(new Array(nLab - 1).fill('')).concat(g.total.vals.map(cleanNum)) : null;
+	return {header_rows: denseHeader(headerModel(res), nLab + g.leaf.length), columns: columns, rows: rows, totals: totals, _truncated: g.truncated, _rowCount: g.rowCount};
+}
+function exportChart(res) {
+	var t = S.view.chart, m = chartModel(res, S.view), ok = m && !m.hint;
+	if (t === 'scatter') {
+		var sc = {type: t, x_label: ok ? m.xl : '', y_label: ok ? m.yl : '', series: ok ? m.series.map((s) => ({name: s.name, points: s.points.map((p) => [cleanNum(p[0]), cleanNum(p[1]), p[2]])})) : []};
+		if (ok && m.sv) { sc.size_label = m.sl; sc.series.forEach((s, i) => { s.sizes = m.series[i].points.map((p) => cleanNum(p[3])); }); }
+		return sc;
+	}
+	var out = {type: t, categories: ok ? m.cats.slice() : [], series: ok ? m.series.map((s) => s.kind ? {name: s.name, values: s.values.map(cleanNum), kind: s.kind, axis: s.kind === 'bar' ? 'primary' : 'secondary'} : {name: s.name, values: s.values.map(cleanNum)}) : []};
+	if (t === 'treemap') out.nodes = ok ? m.nodes.map((n) => ({path: n.path.slice(), value: cleanNum(n.value)})) : [];
+	return out;
+}
+async function doExport(fmt) {
+	if (S.status !== 'ready' || S.busy[fmt]) return;
+	if (!S.view.values.length) { toast('info', 'Add a measure to Values before exporting.', {id: 'hint'}); return; }
+	var res = ensureResult(), t = exportTable(res), up = fmt.toUpperCase();
+	delete t._truncated; delete t._rowCount;
+	var args = {dataset_ref: S.dataset.ref, format: fmt, title: ((S.dataset.title || 'Data Explorer') + ' \u2014 ' + viewTitle(res)).slice(0, 180), view: exportView(), table: t, chart: exportChart(res)};
+	S.busy[fmt] = true; renderHeader();
+	toast('progress', 'Preparing the ' + up + ' file\u2026', {id: 'export'});
+	try {
+		var r = await request('tools/call', {name: 'data_export_view', arguments: args}, 180000);
+		if (!r) throw new Error('Docsie returned an empty response.');
+		if (r.isError) throw new Error(textOf(r) || 'The export failed.');
+		var sc = r.structuredContent || parseJSON(textOf(r)) || {};
+		if (!sc.download_url) throw new Error('The export finished without a download link.');
+		toast('progress', 'Downloading ' + (sc.filename || 'the file') + '\u2026', {id: 'export'});
+		var o = (S.hostCaps && S.hostCaps.downloadFile)
+			? await request('ui/download-file', {contents: [{type: 'resource_link', uri: sc.download_url,
+				name: sc.filename || ('export.' + fmt), mimeType: fmt === 'csv' ? 'text/csv'
+					: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}]}, 20000)
+			: await request('ui/open-link', {url: sc.download_url}, 20000);
+		if (o && o.isError) throw new Error('Docsie couldn\u2019t start the download.');
+		toast('ok', 'Exported ' + (sc.filename || up + ' file'), {id: 'export'});
+	} catch (e) {
+		toast('error', up + ' export failed: ' + (e.message || e), {id: 'export', action: {label: 'Try again', act: 'export', fmt: fmt}});
+	} finally { S.busy[fmt] = false; renderHeader(); }
+}
+
+/* ================= view state (Docsie extension: survive iframe remounts) ================= */
+var MAX_STATE_BYTES = 64000, saveTimer = 0, lastState = '';
+function utf8len(str) { try { return new TextEncoder().encode(str).length; } catch (e) { return str.length * 3; } }
+function scheduleSave() {
+	if (S.status !== 'ready' || S.torn) return;
+	S.userChanged = true;
+	clearTimeout(saveTimer);
+	saveTimer = setTimeout(sendState, 400);
+}
+function flushSave() { if (saveTimer) { clearTimeout(saveTimer); sendState(); } }
+function sendState() {
+	saveTimer = 0;
+	if (S.status !== 'ready' || S.torn || !S.userChanged || !S.dataset) return;
+	try {
+		var st = buildViewState(); if (!st) return;
+		var json = JSON.stringify(st);
+		if (json === lastState) return;
+		lastState = json;
+		notify('docsie/notifications/view-state', {state: st});
+	} catch (e) { /* saving is best effort */ }
+}
+function buildViewState() {
+	var view = exportView(), ui = {panelCollapsed: !!S.ui.fieldsHidden, filterOrder: Object.keys(S.view.filters)};
+	var fg = {};
+	Object.keys(S.ui.feGrain).forEach((k) => { if (k in S.view.filters && own(GRAIN_OK, S.ui.feGrain[k])) fg[k] = S.ui.feGrain[k]; });
+	if (Object.keys(fg).length) ui.filterGrains = fg;
+	var st = {version: 1, dataset_ref: S.dataset.ref, view: view, ui: ui};
+	var size = () => utf8len(JSON.stringify({state: st}));
+	if (size() <= MAX_STATE_BYTES) return st;
+	// long include-lists: store the (shorter) excluded values instead
+	Object.keys(view.filters).forEach((k) => {
+		var spec = view.filters[k], f = S.byName.get(k);
+		if (!Array.isArray(spec) || !f) return;
+		var g = f.type === 'date' ? (detectGrain(spec) || 'day') : null, all = distinctKeys(f, g);
+		if (spec.length * 2 <= all.length) return;
+		var inc = new Set(spec.map((x) => x == null ? BLANK : String(x)));
+		ui.filterExcludes = ui.filterExcludes || {};
+		ui.filterExcludes[k] = {grain: g, values: all.filter((d) => !inc.has(d.key)).map((d) => d.key === BLANK ? null : d.key)};
+		delete view.filters[k];
+	});
+	// still too big: drop the largest filters (recorded) until it fits
+	while (size() > MAX_STATE_BYTES) {
+		var big = null, bigLen = 0;
+		Object.keys(view.filters).forEach((k) => { var l = JSON.stringify(view.filters[k]).length; if (l > bigLen) { big = ['f', k]; bigLen = l; } });
+		Object.keys(ui.filterExcludes || {}).forEach((k) => { var l = JSON.stringify(ui.filterExcludes[k]).length; if (l > bigLen) { big = ['x', k]; bigLen = l; } });
+		if (!big) return null;
+		if (big[0] === 'f') delete view.filters[big[1]]; else delete ui.filterExcludes[big[1]];
+		ui.filterOrder = ui.filterOrder.filter((k) => k !== big[1]);
+		(ui.droppedFilters = ui.droppedFilters || []).push(big[1]);
+	}
+	return st;
+}
+function applySavedState() {
+	var st = S.savedState;
+	try {
+		if (!st || typeof st !== 'object' || Array.isArray(st) || st.version !== 1 || !S.dataset || typeof st.dataset_ref !== 'string' || st.dataset_ref !== S.dataset.ref) return null;
+		var v = st.view;
+		if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+		var ui = st.ui && typeof st.ui === 'object' && !Array.isArray(st.ui) ? st.ui : {};
+		var isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
+		var has = (n) => typeof n === 'string' && S.byName.has(n), list = (a) => Array.isArray(a) ? a : [];
+		var rows = uniq(list(v.rows).filter(has)), columns = uniq(list(v.columns).filter(has)).filter((n) => rows.indexOf(n) < 0), values = [];
+		list(v.values).forEach((x) => {
+			if (!isObj(x) || !has(x.field) || !own(AGG_NAME, x.agg)) return;
+			if (S.byName.get(x.field).type !== 'number' && DIM_AGGS.indexOf(x.agg) < 0) return;
+			if (!values.some((y) => y.field === x.field && y.agg === x.agg)) values.push({field: x.field, agg: x.agg});
+		});
+		if (!rows.length && !columns.length && !values.length) return null;
+		var out = {rows: rows, columns: columns, values: values, filters: {}, date_grain: {}, chart: 'bar', sort: null, top_n: null, subtotals: v.subtotals === true};
+		var dg = isObj(v.date_grain) ? v.date_grain : {};
+		rows.concat(columns).forEach((n) => { var f = S.byName.get(n); if (f.type === 'date') out.date_grain[n] = own(dg, n) && own(GRAIN_OK, dg[n]) ? dg[n] : autoGrain(f); });
+		var fl = isObj(v.filters) ? v.filters : {}, fx = isObj(ui.filterExcludes) ? ui.filterExcludes : {};
+		uniq(list(ui.filterOrder).concat(Object.keys(fl), Object.keys(fx))).filter(has).forEach((k) => {
+			var f = S.byName.get(k), spec = own(fl, k) ? fl[k] : undefined;
+			if (Array.isArray(spec)) out.filters[k] = spec.filter((x) => x == null || typeof x === 'string' || typeof x === 'number').map((x) => x == null ? null : String(x));
+			else if (isObj(spec)) {
+				var lo = spec.min, hi = spec.max;
+				if (f.type === 'date') { lo = typeof lo === 'string' ? lo : null; hi = typeof hi === 'string' ? hi : null; } else { lo = typeof lo === 'number' ? toNum(lo) : null; hi = typeof hi === 'number' ? toNum(hi) : null; }
+				out.filters[k] = lo == null && hi == null ? null : {min: lo, max: hi};
+			} else if (own(fx, k) && isObj(fx[k]) && Array.isArray(fx[k].values)) {
+				var g = f.type === 'date' ? (own(GRAIN_OK, fx[k].grain) ? fx[k].grain : 'day') : null;
+				var exc = new Set(fx[k].values.map((x) => x == null ? BLANK : String(x)));
+				out.filters[k] = distinctKeys(f, g).filter((d) => !exc.has(d.key)).map((d) => d.key === BLANK ? null : d.key);
+			} else out.filters[k] = null;
+		});
+		var ft = rows[0] ? S.byName.get(rows[0]).type : null;
+		out.chart = own(CHART_OK, v.chart) ? v.chart : (ft === 'date' ? 'line' : 'bar');
+		var so = isObj(v.sort) ? v.sort : {};
+		out.sort = (so.by === 'label' || so.by === 'value') && (so.dir === 'asc' || so.dir === 'desc') ? {by: so.by, dir: so.dir} : defaultSort(rows[0]);
+		var tn = typeof v.top_n === 'number' ? v.top_n : null;
+		out.top_n = tn && tn >= 1 && tn <= 100000 ? Math.round(tn) : null;
+		if (typeof ui.panelCollapsed === 'boolean') S.ui.fieldsHidden = ui.panelCollapsed;
+		if (isObj(ui.filterGrains)) Object.keys(ui.filterGrains).forEach((k) => { if (has(k) && own(GRAIN_OK, ui.filterGrains[k])) S.ui.feGrain[k] = ui.filterGrains[k]; });
+		S.restored = true;
+		return out;
+	} catch (e) { return null; }
+}
+window.addEventListener('pagehide', flushSave);
+
+/* ================= report brief ================= */
+function filtersText() {
+	var parts = [];
+	Object.keys(S.view.filters).forEach((k) => {
+		var f = S.byName.get(k), s = S.view.filters[k];
+		if (s == null) return;
+		if (Array.isArray(s)) {
+			var g = f.type === 'date' ? detectGrain(s) : null;
+			var labs = s.map((x) => x == null ? '(blank)' : (g ? dateLabel(x, g) : x));
+			parts.push(!labs.length ? f.label + ': no values' : labs.length <= 6 ? f.label + ' in ' + labs.join(', ') : f.label + ': ' + labs.length + ' selected values (' + labs.slice(0, 4).join(', ') + ', \u2026)');
+		} else {
+			var fm = f.type === 'date' ? (x) => x : (x) => fmtFull(x, f.currency ? 'currency' : 'number');
+			if (s.min != null && s.max != null) parts.push(f.label + ' between ' + fm(s.min) + ' and ' + fm(s.max));
+			else if (s.min != null) parts.push(f.label + ' \u2265 ' + fm(s.min));
+			else if (s.max != null) parts.push(f.label + ' \u2264 ' + fm(s.max));
+		}
+	});
+	return parts.join('; ');
+}
+function mdCell(x) { return String(x == null ? '' : x).replace(/\|/g, '\\|').replace(/[\r\n]+/g, ' '); }
+function markdownTable(t, maxRows, maxCols) {
+	var cols = t.columns.slice(0, maxCols), nc = cols.length;
+	var fmtC = (x, c) => { if (c.kind === 'dimension') return mdCell(x); return typeof x === 'number' ? fmtFull(x, c.format) : (x == null ? '\u2013' : mdCell(x)); };
+	var lines = ['| ' + cols.map((c) => mdCell(c.label) || ' ').join(' | ') + ' |', '|' + cols.map((c) => c.kind === 'dimension' ? ' :--- ' : ' ---: ').join('|') + '|'];
+	t.rows.slice(0, maxRows).forEach((r) => { lines.push('| ' + cols.map((c, i) => fmtC(r[i], c)).join(' | ') + ' |'); });
+	if (t.totals) lines.push('| ' + cols.map((c, i) => { var s = fmtC(t.totals[i], c); return i === 0 ? '**' + s + '**' : s; }).join(' | ') + ' |');
+	var notes = [];
+	var total = Math.max(t._rowCount || 0, t.rows.length);
+	if (total > maxRows) notes.push('first ' + maxRows + ' of ' + fmtInt(total) + ' rows shown');
+	if (t.columns.length > nc) notes.push('first ' + nc + ' of ' + t.columns.length + ' columns shown');
+	return lines.join('\n') + (notes.length ? '\n(' + notes.join('; ') + '.)' : '');
+}
+function keyFacts(res) {
+	var facts = [], vs = res.vs;
+	if (!vs.length) return [fmtInt(res.n) + ' rows match the current filters.'];
+	var v0 = vs[0], fm = (x) => fmtFull(x, v0.fmt);
+	facts.push('Grand total across ' + fmtInt(res.n) + ' rows \u2014 ' + vs.slice(0, 3).map((v, k) => v.label + ': ' + fmtFull(res.grand[k], v.fmt)).join('; ') + '.');
+	var tot = v0.additive ? res.grand[0] : null;
+	var share = (x) => tot ? ' (' + fmtPct(x / tot) + ' of total)' : '';
+	if (res.nr) {
+		var d0 = res.rd[0], mem = [];
+		if (res.nr === 1) res.rows.forEach((r) => { mem.push({key: r.parts[0], label: r.labels[0], v: pick(res.rowT.get(r.key), 0)}); });
+		else res.lv[1].tot.forEach((a, k) => { mem.push({key: k, label: d0.label(k), v: a[0]}); });
+		mem = mem.filter((x) => x.v != null && x.key !== BLANK);
+		if (mem.length >= 2) {
+			if (d0.f.type === 'date') {
+				var ch = mem.slice().sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0), first = ch[0], last = ch[ch.length - 1];
+				var pc = first.v ? (last.v - first.v) / Math.abs(first.v) : null;
+				facts.push(v0.label + ' went from ' + fm(first.v) + ' in ' + first.label + ' to ' + fm(last.v) + ' in ' + last.label + (pc != null ? ' (' + signedPct(pc) + ')' : '') + '.');
+				var pk = mem.reduce((a, b) => b.v > a.v ? b : a), lw = mem.reduce((a, b) => b.v < a.v ? b : a);
+				facts.push('Peak ' + d0.grain + ': ' + pk.label + ' at ' + fm(pk.v) + '; lowest: ' + lw.label + ' at ' + fm(lw.v) + '.');
+				if (ch.length > 2) {
+					var best = null;
+					for (var i = 1; i < ch.length; i++) { var dd = ch[i].v - ch[i - 1].v; if (!best || Math.abs(dd) > Math.abs(best.d)) best = {d: dd, a: ch[i - 1], b: ch[i]}; }
+					facts.push('Biggest ' + d0.grain + '-over-' + d0.grain + ' change: ' + (best.d > 0 ? '+' : '') + fm(best.d) + ' from ' + best.a.label + ' to ' + best.b.label + '.');
+				}
+			} else {
+				var sorted = mem.slice().sort((a, b) => b.v - a.v), top = sorted[0], bot = sorted[sorted.length - 1];
+				facts.push('Highest ' + d0.title + ': ' + top.label + ' at ' + fm(top.v) + share(top.v) + '; lowest: ' + bot.label + ' at ' + fm(bot.v) + share(bot.v) + '.');
+				if (tot && sorted.length > 4) { var t3 = sorted.slice(0, 3).reduce((s, x) => s + x.v, 0); facts.push('The top 3 ' + d0.title + ' values (' + sorted.slice(0, 3).map((x) => x.label).join(', ') + ') account for ' + fmtPct(t3 / tot) + ' of the total.'); }
+			}
+		}
+	}
+	if (res.nc && res.cols.length >= 2) {
+		var c0 = res.cd[0], cm = res.cols.map((c) => { return {label: c.labels.join(' \u00b7 '), v: pick(res.colT.get(c.key), 0)}; }).filter((x) => x.v != null).sort((a, b) => b.v - a.v);
+		if (cm.length >= 2) facts.push('Across ' + c0.title + ', ' + cm[0].label + ' leads with ' + fm(cm[0].v) + share(cm[0].v) + '; ' + cm[cm.length - 1].label + ' is lowest at ' + fm(cm[cm.length - 1].v) + share(cm[cm.length - 1].v) + '.');
+	}
+	if (res.topInfo) facts.push('Only the top ' + res.topInfo.n + ' of ' + fmtInt(res.topInfo.of) + ' ' + res.rd[0].title + ' values are included.');
+	return facts.slice(0, 6);
+}
+function reportText() {
+	var res = ensureResult(), ds = S.dataset, t = exportTable(res, 200);
+	if (res.nv === 1 && res.nc) { var suf = ' \u00b7 ' + res.vs[0].label; t.columns = t.columns.map((c) => c.kind === 'measure' && c.label.slice(-suf.length) === suf ? Object.assign({}, c, {label: c.label.slice(0, -suf.length)}) : c); }
+	var build = (maxRows) => {
+		var vals = res.vs.map((v) => v.label).join(', ') || 'row counts';
+		var dn = (d) => d.title + (d.grain && d.title.toLowerCase() !== d.grain ? ' (by ' + d.grain + ')' : '');
+		var rd = res.rd.map(dn).join(' > '), cd = res.cd.map(dn).join(' > ');
+		var view = vals + (rd ? ' by ' + rd : '') + (cd ? (rd ? ' and ' : ' by ') + cd : '');
+		var head = 'Dataset: ' + (ds.title || 'Untitled dataset') + ' (' + fmtInt(res.n) + ' rows after filters' + (S.truncated ? '; loaded ' + fmtInt(S.data.length) + ' of ' + fmtInt(S.totalRows) + ' rows' : '') + ')' + (ds.source ? ', source: ' + ds.source : '') + '. View: ' + view + '; filters: ' + (filtersText() || 'none') + (res.topInfo ? '; top ' + res.topInfo.n + ' ' + res.rd[0].title + ' by ' + res.vs[0].label : '') + '.';
+		return ['Write an analytical report from this Data Explorer view and export it as a DOCX with the workspace template. '
+			+ 'Write the report yourself in Markdown (title, summary, key findings, the table, what to watch), using only these numbers, '
+			+ 'then call export_document with output_format "docx", the Markdown as content and the report title. '
+			+ 'Do not start a long-form generation job.', head, '', markdownTable(t, maxRows, 10), '', 'Key facts:'].concat(keyFacts(res).map((f) => '- ' + f)).join('\n');
+	};
+	var text = build(40);
+	[25, 15, 8, 3].forEach((n) => { if (text.length > 6000) text = build(n); });
+	if (text.length > 6000) text = text.slice(0, 5990) + '\u2026';
+	return text;
+}
+async function doReport() {
+	if (S.status !== 'ready' || S.busy.report) return;
+	if (!S.view.values.length) { toast('info', 'Add a measure to Values before writing a report.', {id: 'hint'}); return; }
+	var text = reportText();
+	S.busy.report = true; renderHeader();
+	toast('progress', 'Sending the brief to Docsie\u2026', {id: 'report'});
+	try {
+		var r = await request('ui/message', {role: 'user', content: {type: 'text', text: text}}, 30000);
+		if (r && r.isError) throw new Error(textOf(r) || 'Docsie didn\u2019t accept the message.');
+		toast('ok', 'Sent to Docsie \u2014 the report request is in the chat.', {id: 'report', ms: 6000});
+	} catch (e) {
+		toast('error', 'Couldn\u2019t send the brief: ' + (e.message || e), {id: 'report', action: {label: 'Try again', act: 'report'}});
+	} finally { S.busy.report = false; renderHeader(); }
+}
+
+/* ================= boot ================= */
+async function init() {
+	S.initFailed = false;
+	if (S.status === 'error' && !S.dataset) S.status = 'connecting';
+	render();
+	try {
+		var r = await request('ui/initialize', {protocolVersion: PROTOCOL, appInfo: {name: 'docsie-data-explorer', version: '1.0.0'}, appCapabilities: {availableDisplayModes: ['inline', 'fullscreen']}}, 20000);
+		r = r || {};
+		S.hostInfo = r.hostInfo || null; S.hostCaps = r.hostCapabilities || null;
+		var hc = r.hostContext && typeof r.hostContext === 'object' ? r.hostContext : {};
+		S.savedState = hc.docsieViewState;
+		applyContext(hc);
+		if (S.status === 'ready' && !S.userChanged) { var rv = applySavedState(); if (rv) { S.view = rv; S.lastFirst = rv.rows[0]; } }
+		notify('ui/notifications/initialized');
+		S.inited = true;
+		if (S.status === 'connecting') S.status = 'waiting';
+		requestAnimationFrame(reportSize);
+	} catch (e) {
+		if (S.status === 'connecting' || S.status === 'waiting') { S.status = 'error'; S.initFailed = true; S.msg = 'Couldn\u2019t connect to Docsie'; S.detail = e.message || String(e); }
+	}
+	render();
+}
+sizeApp();
+init();
+})();
+</script>
+</body>
+</html>

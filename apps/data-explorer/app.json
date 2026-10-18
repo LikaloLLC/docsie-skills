@@ -1,0 +1,28 @@
+{
+  "manifest_version": 1,
+  "name": "Data Explorer",
+  "description": "A pivot table with ten chart types for workspace CSV, Excel and JSON files, AI Tables or sample data, right in the chat.",
+  "components": [
+    {
+      "name": "explorer",
+      "title": "Data Explorer",
+      "entry": "ui/explorer.html",
+      "description": "Open the Data Explorer, a pivot table with charts, on a workspace file, an AI Table or sample data. Use when the user wants to analyze, pivot, chart, compare or summarize tabular data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "file_id": {"type": "string", "description": "A CSV, Excel or JSON file in the workspace"},
+          "sheet": {"type": "string", "description": "The Excel sheet to open"},
+          "table_id": {"type": "string", "description": "An AI Table to open"},
+          "sample": {"type": "boolean", "description": "Open the fictional sample dataset"},
+          "rows": {"type": "array", "items": {"type": "string"}, "description": "Fields to group rows by"},
+          "columns": {"type": "array", "items": {"type": "string"}, "description": "Fields to spread across columns"},
+          "values": {"type": "array", "items": {"type": "string"}, "description": "Number fields to total"},
+          "chart": {"type": "string", "enum": ["table", "heatmap", "bar", "stacked_bar", "line", "area", "stacked_area", "donut", "scatter", "combo", "treemap"]}
+        }
+      },
+      "prefers_border": false
+    }
+  ],
+  "docsie_tools": ["data_sources", "data_load_rows", "data_export_view"]
+}
