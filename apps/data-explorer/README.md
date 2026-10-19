@@ -2,7 +2,7 @@
 
 A pivot table with ten chart types that opens inside the Docsie chat. Ask the assistant to analyze a CSV or Excel file, an AI Table or the sample data, and the Data Explorer appears in the conversation: drag fields onto rows, columns and values, filter, switch charts, export a formatted Excel workbook, or hand the view back to the assistant to write a report.
 
-This is the same Data Explorer that ships with Docsie. Docsie's built-in copy and this folder use the same files and the same app interface, so this is a working example of everything an app can do:
+This is the same Data Explorer that ships with Docsie, so you don't need to install it: it's already part of every organization's AI assistant. Install this copy only to try how apps are installed, or use it as a starting point for your own app. Docsie's built-in copy and this folder use the same files and the same app interface, so this is a working example of everything an app can do:
 
 | An app can… | How the Data Explorer does it |
 |---|---|
